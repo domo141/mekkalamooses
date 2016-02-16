@@ -1,0 +1,91 @@
+#!/bin/sh
+# -*- mode: shell-script; sh-basic-offset: 8; tab-width: 8 -*-
+#
+# Author: Tomi Ollila -- too ät iki piste fi
+#
+#	Copyright (c) 2016 Tomi Ollila
+#	    All rights reserved
+#
+# Created: Sat 06 Jun 2015 12:36:20 EEST too // telekkarista
+# Created: Wed 13 Jan 2016 20:18:53 EET too // mekkalamooses
+# Last modified: Sat 06 Feb 2016 00:18:46 +0200 too
+#
+# Licensed under GPLv3
+
+set -eu
+#set -x ;: "$0" // "$@"
+
+if test "${MM_KOTI-}" = ''
+then	if test "$0" = './mekkalamooses'
+	then
+		MM_KOTI=$PWD
+	else
+		MM_KOTI=${XDG_DATA_HOME:-$HOME/.local/share}/mekkalamooses
+	fi
+	export MM_KOTI
+fi
+
+die () { echo "$@" >&2; exit 1; }
+
+#aikaleima ()
+#{
+#	aikaleima=`exec date +%Y%m%d-%H%M%S`
+#}
+
+aseta_tiedostohakemisto ()
+{
+	if [ "$MM_TIEDOSTOHAKEMISTO" ] && [ -d "$MM_TIEDOSTOHAKEMISTO" ]
+	then	th=$MM_TIEDOSTOHAKEMISTO
+		return
+	fi
+	th=`exec xdg-user-dir VIDEOS 2>/dev/null` || {
+		cf=${XDG_CONFIG_HOME:-$HOME/.config}/user-dirs.dirs
+		test ! -f "$cf" || \
+			th=`exec sed -n 's/XDG_VIDEOS_DIR="\(.*\)"/\1/p' "$cf"`
+	}
+	case $th
+	  in '') th=$HOME/Videos
+	  ;; $HOME|$HOME/) th=$HOME/Videos # älä "sotke" kotihakemistoa
+	  ;; '$HOME'|'$HOME/') th=$HOME/Videos # ditto, from user-dirs..
+	  ;; /*) : ok
+	  ;; '$HOME/'*) th=$HOME/${th#'$HOME/'}
+	  ;; *) die "Ei pystytty selvittämään sopivaa videoiden" \
+			"tallennushakemistoa (eli outo $th)"
+	esac
+	if test -d $th/mekkalamooses
+	then mv $th/mekkalamooses $th/mm-vm
+	fi
+	# tiedostohakemisto: /mekkalamooses-välimuisti/ lyhennettynä
+	tiedostohakemisto=$th/mm-vm
+	unset th
+	test -d "$tiedostohakemisto" || mkdir "$tiedostohakemisto"
+	MM_TIEDOSTOHAKEMISTO=$tiedostohakemisto
+}
+
+set_id () { IFS='(='; set x `exec id`; id=$3; }
+
+aseta_ajohakemisto ()
+{
+	if [ "${XDG_RUNTIME_DIR-}" ]
+	then	MM_AJOHAKEMISTO=$XDG_RUNTIME_DIR
+	else
+		set_id; MM_AJOHAKEMISTO=/tmp/mekkalamooses$id
+	fi
+	test -d "$MM_AJOHAKEMISTO" || mkdir -p "$MM_AJOHAKEMISTO"
+	chmod 700 "$MM_AJOHAKEMISTO"
+}
+
+if pgrep -c 'mm-tausta' >/dev/null
+then	die mekkalamooses jo ajossa '?'
+fi
+
+cd "$MM_KOTI"
+
+MM_TIEDOSTOHAKEMISTO=
+
+aseta_tiedostohakemisto
+#aseta_ajohakemisto
+
+export MM_TIEDOSTOHAKEMISTO # MM_AJOHAKEMISTO
+
+exec ./mm-tausta -title mekkalamooses ./mm-valinta

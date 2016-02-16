@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Name=mekkalamooses
+Comment=mekkalamooses
+GenericName=mekkalamooses
+Exec=./mekkalamooses
+Icon=mekkalamooses-128
+Terminal=false
+Type=Application
+Categories=AudioVideo;Video;
+StartupNotify=false
