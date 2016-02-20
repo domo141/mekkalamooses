@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Wed 13 Jan 2016 20:18:53 EET too
-# Last modified: Mon 15 Feb 2016 20:28:42 +0200 too
+# Last modified: Thu 18 Feb 2016 21:20:16 +0200 too
 
 # Licensed under GPLv3
 
@@ -116,13 +116,28 @@ unless (fork) {
 }
 sleep 1 while wait == -1;
 exit if $?;
+
+# https://en.wikipedia.org/wiki/Zeller%27s_congruence
+sub zeller_paiva($$$)
+{
+    my ($y, $m) = ($_[0], $_[1]);
+    if ($m == 1 || $m == 2) {
+	$m += 12;
+	$y -= 1;
+    }
+    my $wd = int($_[2] + int(($m + 1) * 26 / 10) + $y + int ($y / 4)
+		 + 6 * int ($y / 100) + int ($y / 400)) % 7;
+    return qw/la su ma ti ke to pe/[$wd];
+}
+
 for (<*.*>) {
     next if /frag/i;
     next unless -f $_;
     my $s = $_;
     # toivottavasti aikaformaatti säilyy...
     if (s/-(\d\d\d\d)-(\d\d)-(\d\d)T(\d\d):(\d\d):[^.]+(.*)//) {
-	my $aika = $1.$2.$3.'-'.$4.$5;
+	my $zvpv = zeller_paiva $1, $2, $3;
+	my $aika = $1.$2.$3.'-'.$zvpv.'-'.$4.$5;
 	my $lopp = $6;
 	$_ = $_ . '-' . $aika unless s/\s*:\s*/-$aika-/;
 	$_ = $_ . $lopp;
