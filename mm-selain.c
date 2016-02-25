@@ -18,7 +18,7 @@
  *
  * Created: Mon 01 Jun 2015 22:19:23 EEST too // telekkarista-wkg.c
  * Created: Mon 11 Jan 2016 20:48:31 EET too // mm-selain.c
- * Last modified: Sat 13 Feb 2016 21:10:43 +0200 too
+ * Last modified: Thu 25 Feb 2016 20:13:59 +0200 too
  */
 
 // Licensed under GPLv3
@@ -653,6 +653,21 @@ static gboolean navigation_policy_decision_requested(
     int nomatch = regexec(&G.preg1, uri, 0, null, 0);
 
     eprintf("%s: %s (%d)\n", __func__, uri, nomatch);
+
+    static gint64 pt = 0;
+    gint64 ct = g_get_real_time();
+    static uint32_t ph = 0;
+    uint32_t ch = djb2_hash(uri);
+
+    if (ct - pt < 2000000) {
+        if (ch == ph) {
+            pt = ct;
+            webkit_web_policy_decision_ignore(policy_decision);
+            return true;
+        }
+    }
+    pt = ct;
+    ph = ch;
 
     if (! nomatch) {
         run_command("./mm-kysely", uri, null);
