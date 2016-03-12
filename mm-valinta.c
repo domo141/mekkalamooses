@@ -17,7 +17,7 @@
  *
  * Created: Wed 29 Apr 2009 20:19:00 EEST too
  * Created: Sun 14 Jun 2015 10:42:38 +0300 too
- * Last modified: Sun 07 Feb 2016 18:48:49 +0200 too
+ * Last modified: Wed 02 Mar 2016 22:33:45 +0200 too
  */
 
 // Licensed under GPLv3
@@ -181,7 +181,7 @@ GtkWidget * tee_nappi_laatikkoon(GtkBox * box, void (*cb)(void),
 static void env_exists(const char * name)
 {
     if (getenv(name) == null) {
-	fprintf(stderr, "Ympäristömuuttujaa '%s' ei asetettu...\n", name);
+	fprintf(stderr, "Ympäristömuuttujaa '%s' ei asetettu.\n", name);
 	exit(1);
     }
 }

@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Tue 12 Jan 2016 22:30:52 EET too
-# Last modified: Sat 06 Feb 2016 11:56:29 +0200 too
+# Last modified: Wed 02 Mar 2016 21:35:06 +0200 too
 
 use 5.8.1;
 use strict;
@@ -40,7 +40,7 @@ die if $?;
 
 if (fork) {
     exec './testaa-regex';
-    die 'not reached';
+    die "exec failed: $!\n";
 }
 select undef, undef, undef, 0.01;
 

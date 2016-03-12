@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Wed 13 Jan 2016 20:18:53 EET too
-# Last modified: Thu 18 Feb 2016 21:20:16 +0200 too
+# Last modified: Thu 10 Mar 2016 19:07:39 +0200 too
 
 # Licensed under GPLv3
 
@@ -31,7 +31,7 @@ sub xexec(@)
 {
     print "\nSuoritetaan @_\n";
     exec @_;
-    die 'not reached';
+    die "exec failed: $!\n";
 }
 
 my $hak = $ENV{MM_TIEDOSTOHAKEMISTO};
@@ -67,11 +67,11 @@ my $td = "$hak/kesken/$d";
 	exit if fork;
 	if ($pc == 0) {
 	    exec './mm-viesti', $url, 'lataajassa virhe,', 'ei löydä itseään';
-	    die 'not reached';
+	    die "exec failed: $!\n";
 	}
 	exec './mm-viesti', $url, 'Laitettaisiin tämä jonoon, mutta',
 	  'kun sitä ei oo vielä toteutettu';
-	die 'not reached';
+	die "exec failed: $!\n";
     }
 }
 
@@ -86,7 +86,7 @@ if (open I, '<', "$hak/kesken/jono") {
 	    close I;
 	    exec './mm-viesti', $url, "'$d' on jo ladattu:", '', $1, '',
 	      'poista tieto jonosta jos virheellinen';
-	    die 'not reached';
+	    die "exec failed: $!\n";
 	}
     }
     close I;
@@ -142,7 +142,7 @@ for (<*.*>) {
 	$_ = $_ . '-' . $aika unless s/\s*:\s*/-$aika-/;
 	$_ = $_ . $lopp;
     }
-    tr/: /__/; s/__+/_/g;
+    tr/: ,/___/; s/__+/_/g;
     rename $s, "../../$_";
     print "Siirretty nimelle $_\n";
 }

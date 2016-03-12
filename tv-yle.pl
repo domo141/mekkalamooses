@@ -5,7 +5,7 @@
 # Author: Tomi Ollila -- too ät iki piste fi
 #
 # Created: Fri 04 Dec 2015 18:53:41 EET too
-# Last modified: Sun 31 Jan 2016 21:04:45 +0200 too
+# Last modified: Wed 02 Mar 2016 21:34:35 +0200 too
 
 # Tämän lisenssi: PD
 # * https://creativecommons.org/publicdomain/zero/1.0/deed.fi
@@ -45,10 +45,11 @@ close P;
 
 exec qw/vlc -f --video-on-top --play-and-exit --global-key-quit q
 	--network-caching 5000 --no-video-title-show/, $url;
-die 'not reached';
+die "exec failed: $!\n";
 
 exec qw/mpv -fs -x11-netwm=no -monitoraspect 16:9/, $url;
-die 'not reached';
+die "exec failed: $!\n";
+
 
 __END__
 #EXTM3U

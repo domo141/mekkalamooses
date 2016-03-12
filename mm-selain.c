@@ -18,7 +18,7 @@
  *
  * Created: Mon 01 Jun 2015 22:19:23 EEST too // telekkarista-wkg.c
  * Created: Mon 11 Jan 2016 20:48:31 EET too // mm-selain.c
- * Last modified: Thu 25 Feb 2016 20:13:59 +0200 too
+ * Last modified: Tue 08 Mar 2016 13:11:42 +0200 too
  */
 
 // Licensed under GPLv3
@@ -110,11 +110,14 @@ extern int execve(const char *cmd, const char *argv[], char * const envp[]);
 
 #if 1
 #define DBG 1
+//#warning dbg set
 static char dbuf[32768];
 #define dz do { char * dptr = dbuf; int dbgl; (void)dbgl; \
     di(__LINE__) dc(':') spc
-#define ds(s) dbgl = strlen(s); memcpy(dptr, s, dbgl); dptr += dbgl;
-#define da(a) memcpy(dptr, a, sizeof a - 1); dptr += sizeof a - 1;
+#define da(a) { memcpy(dptr, a, sizeof a - 1); dptr += sizeof a - 1; }
+#define ds(s) if (s) { dbgl = strlen(s); memcpy(dptr, s, dbgl); dptr += dbgl; \
+    } else da("(null)")
+
 #define dc(c) *dptr++ = c;
 #define spc *dptr++ = ' ';
 #define dot *dptr++ = '.';
@@ -125,7 +128,7 @@ static char dbuf[32768];
 #define di(i) dptr += sprintf(dptr, "%ld", (long)i);
 #define dx(x) dptr += sprintf(dptr, "%lx", (long)x);
 
-#define df ds(__func__) dc('(')
+#define df da(__func__) dc('(')
 #define dfc dc(')')
 #define dss(s) da(#s) da(": \"") ds(s) dc('"')
 #define dsi(i) da(#i) da(": ") di(i)
@@ -137,12 +140,13 @@ static char dbuf[32768];
 
 #define DBG 0
 #define dz do {
-#define ds(s)
 #define da(a)
+#define ds(s)
 #define dc(c)
 #define spc
 #define dot
 #define cmm
+#define cln
 #define dnl
 #define du(u)
 #define di(i)
@@ -150,8 +154,8 @@ static char dbuf[32768];
 
 #define df
 #define dfc
-#define dsi(i)
 #define dss(s)
+#define dsi(i)
 
 #define dw } while (0)
 #define dws } while (0)
@@ -407,9 +411,6 @@ void cairo_paint(cairo_t * cr) { (void)cr; }
 
 #define signal_connect_swapped(widget, signal, func, data) \
     g_signal_connect_swapped(widget, #signal, G_CALLBACK(func), data);
-
-static gboolean return_true(void) { return true; }
-//static gboolean return_false(void) { return false; }
 
 static void restart(void /* GtkButton *button, gpointer user_data */)
 {
@@ -853,7 +854,7 @@ int main(int argc, char* argv[])
     //               resource_request_starting, null);
 
     WebKitWebFrame * wf = webkit_web_view_get_main_frame(web_view);
-    signal_connect(wf, scrollbars-policy-changed, return_true, null);
+    signal_connect(wf, scrollbars-policy-changed, gtk_true, null);
 
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrollw),
                                    GTK_POLICY_NEVER,
@@ -882,7 +883,7 @@ int main(int argc, char* argv[])
     }
 #endif
     // w/ this we have high chance to disconnect from (X) server
-    for (int i = 3; i < 16; i++)
+    for (int i = 3; i < 64; i++)
         close(i);
 
     while (1) {
