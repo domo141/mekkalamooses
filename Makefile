@@ -1,11 +1,11 @@
 
-# Last modified: Sat 13 Feb 2016 21:26:15 +0200 too
+# Last modified: Sun 13 Mar 2016 18:26:34 +0200 too
 
 SHELL = /bin/sh
 
 .PHONY: force
 
-BIN = mm-selain mm-valinta mm-tausta mm-kysely mm-viesti
+BIN = mm-selain mm-valinta mm-tausta mm-kysely mm-viesti mm-kattele
 
 # set GITDIR if .git exists
 ifeq ($(wildcard .git),)
@@ -61,7 +61,7 @@ install.sh:
 		fi
 	fi
 	x sh -n mekkalamooses
-	pls='mm-lataaja.pl tv-yle.pl'
+	pls='mm-lataaja.pl mm-kattele.pl tv-yle.pl'
 	for pl in $pls; do perl -c $pl; done
 	mdms "$td" "$dappdir" "$icondir"
 	x cp -f mekkalamooses $pls mm-ikoni.png mekkalamooses-128.png "$td"

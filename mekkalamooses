@@ -8,7 +8,7 @@
 #
 # Created: Sat 06 Jun 2015 12:36:20 EEST too // telekkarista
 # Created: Wed 13 Jan 2016 20:18:53 EET too // mekkalamooses
-# Last modified: Sat 06 Feb 2016 00:18:46 +0200 too
+# Last modified: Mon 14 Mar 2016 20:59:59 +0200 too
 #
 # Licensed under GPLv3
 
@@ -82,10 +82,28 @@ fi
 cd "$MM_KOTI"
 
 MM_TIEDOSTOHAKEMISTO=
+MM_KATTELE_KIELET=fih,fin,joo
 
 aseta_tiedostohakemisto
 #aseta_ajohakemisto
 
-export MM_TIEDOSTOHAKEMISTO # MM_AJOHAKEMISTO
+# poista poistojonossa olevat. toiminee linux- ja *BSD-ympäristöissä...
+( cd $MM_TIEDOSTOHAKEMISTO
+  test -d kesken || exit 0
+  cd kesken
+  day=
+  dc () {
+	case $day in '') day=`exec date --date=yesterday +%Y%m%d`; esac
+	test $3$4$5 -ge $day || rm -rf "$1"
+  }
+  for d in p-20[0-9][0-9]-[01][0-9]-[0123][0-9]-*
+  do
+	test -d "$d" || continue
+	IFS=-
+	dc "$d" $d
+  done
+)
 
-exec ./mm-tausta -title mekkalamooses ./mm-valinta
+export MM_TIEDOSTOHAKEMISTO MM_KATTELE_KIELET # MM_AJOHAKEMISTO
+
+exec ./mm-tausta -title mekkalamooses ./mm-valinta # 1020x692-0+0

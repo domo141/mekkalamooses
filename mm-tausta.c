@@ -17,7 +17,7 @@
  *	    All rights reserved
  *
  * Created: Tue 25 Sep 2012 22:10:56 EEST too
- * Last modified: Sun 07 Feb 2016 22:06:54 +0200 too
+ * Last modified: Sat 12 Mar 2016 23:29:07 +0200 too
  */
 
 // Licensed under GPLv3
@@ -98,8 +98,9 @@
 
 struct {
     const char * progname;
-    int cpid;
-    int cfd;
+    int ccount;
+    int ppid;
+    int cfd, rfd;
     int usr1;
     int valo;
     char hold;
@@ -130,7 +131,10 @@ void vdie(const char * format, va_list ap)
 {
     fprintf(stderr, "%s: ", G.progname);
     verrf(format, ap);
-    exit(1);
+    if (G.ppid == getpid())
+	exit(1);
+    else
+	_exit(1);
 }
 
 static __attribute__((noreturn))
@@ -142,31 +146,79 @@ void die(const char * format, ...)
     va_end(ap);
 }
 
-static
-int run_prog(char * argv[])
+static void xdup2(int ofd, int nfd)
 {
-    int pfd[2];
+    if (dup2(ofd, nfd) < 0)
+	die("dup2:");
+}
 
-    if (pipe(pfd) < 0)
+static void xpipe(int pipefd[2])
+{
+    if (pipe(pipefd) < 0)
 	die("pipe:");
+}
 
-    int pid = fork();
-    if (pid > 0) {
-	close(pfd[1]);
-	G.cpid = pid;
-	return pfd[0];
-    }
+static pid_t xfork(void)
+{
+    pid_t pid = fork();
     if (pid < 0)
 	die("fork:");
+    return pid;
+}
+
+static
+gboolean child_fd_in(GIOChannel * source /*, ... */)
+{
+    int fd = g_io_channel_unix_get_fd(source);
+    char buf[32];
+    int len = read(fd, buf, sizeof buf);
+    if (len <= 0) {
+	G.ccount--;
+	if (G.ccount <= 0 && ! G.hold)
+	    gtk_main_quit();
+	g_io_channel_unref(source); // g_io_channel_unix_new()
+	return false;
+    }
+    return true;
+}
+
+static void movefd(int ofd, int nfd)
+{
+    if (ofd == nfd)
+	return;
+    xdup2(ofd, nfd);
+    close(ofd);
+}
+
+static
+void run_prog(char * argv[])
+{
+    int pfd[2];
+    xpipe(pfd);
+
+    pid_t pid = xfork();
+    if (pid > 0) {
+	close(pfd[1]);
+	GIOChannel * iochannel = g_io_channel_unix_new(pfd[0]);
+	g_io_add_watch(iochannel, G_IO_IN | G_IO_HUP, (GIOFunc)child_fd_in, 0);
+	G.ccount++;
+	return;
+    }
+
     /* child */
+    movefd(pfd[1], 101);
+    close(pfd[1]);
     close(99);
+    close(G.cfd);
     close(pfd[0]);
-    dup2(pfd[1], 1);
-    dup2(pfd[1], 2);
+    xdup2(G.rfd, 1);
+    xdup2(G.rfd, 2);
+    close(G.rfd); // expect rfd > 2
 
     execvp(argv[0], argv);
     die("execvp:");
 }
+
 
 static
 void _sigact(int sig, void (*handler)(int))
@@ -180,23 +232,24 @@ void _sigact(int sig, void (*handler)(int))
 }
 
 static
-void sigchld_handler(int sig)
-{
-    (void)sig;
-    if (G.cpid && waitpid(G.cpid, null, WNOHANG) == G.cpid)
-	G.cpid = 0;
-}
-static
 void sigusr1_handler(int sig)
 {
     (void)sig;
     G.usr1 = 1;
 }
 
+#define gtk_window_(fn, wid, ...) \
+    gtk_window_ ## fn(GTK_WINDOW(wid), ##__VA_ARGS__)
+#define gtk_box_(fn, wid, ...) \
+    gtk_box_ ## fn(GTK_BOX(wid), ##__VA_ARGS__)
+
 #define signal_connect(widget, signal, func, data) \
     g_signal_connect(widget, #signal, G_CALLBACK(func), data);
 #define signal_connect_swapped(widget, signal, func, data) \
     g_signal_connect_swapped(widget, #signal, G_CALLBACK(func), data);
+
+#define set_one_property(object, name, value) \
+	g_object_set(G_OBJECT(object), #name, value, null)
 
 
 static void windowp_close(GtkWidget ** window)
@@ -204,9 +257,6 @@ static void windowp_close(GtkWidget ** window)
     gtk_widget_destroy(*window);
     *window = null;
 }
-
-#define gtk_window_(fn, wid, ...) \
-    gtk_window_ ## fn(GTK_WINDOW(wid), ##__VA_ARGS__)
 
 static void move_bmw(GtkWidget * cqw, GdkRectangle * a, GtkWidget * mainwin)
 {
@@ -231,6 +281,22 @@ static void move_bmw(GtkWidget * cqw, GdkRectangle * a, GtkWidget * mainwin)
     // else don't move //
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-qual"
+static void pkill_lataajat(GtkWidget ** windowp)
+{
+    const char * argv[] = { "pkill", "-s", "0", "php", null };
+    run_prog((char **)argv);
+    windowp_close(windowp);
+}
+
+static void run_kattele(GtkWidget ** windowp)
+{
+    const char * argv[3] = { "./mm-kattele", null };
+    run_prog((char **)argv);
+    windowp_close(windowp);
+}
+#pragma GCC diagnostic pop
 
 static void buttonmenu(GtkWidget * mainwin)
 {
@@ -241,15 +307,26 @@ static void buttonmenu(GtkWidget * mainwin)
 	return;
     }
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window), "vaiheessa");
+    gtk_window_set_title(GTK_WINDOW(window), "mitäs");
     gtk_window_set_decorated(GTK_WINDOW(window), false);
     gtk_container_set_border_width(GTK_CONTAINER(window), 4);
-    GtkWidget * label = gtk_label_new("Hieno on nappula, mutta\n"
-				      "tää ei tee (vielä) mitään.");
-    GtkWidget * frame = gtk_frame_new(null);
-    gtk_misc_set_padding(GTK_MISC(label), 4, 4);
-    gtk_container_add(GTK_CONTAINER(frame), label);
-    gtk_container_add(GTK_CONTAINER(window), frame);
+
+    GtkWidget * button, * box = gtk_hbox_new(false, 4);
+
+    button = gtk_button_new_with_label("pysäytä lataukset");
+    set_one_property(button, relief, GTK_RELIEF_NONE);
+    signal_connect_swapped(button, clicked, pkill_lataajat, &window);
+    gtk_box_(pack_start, box, button, false, true, 0);
+
+    gtk_box_(pack_start, box, gtk_vseparator_new(), false, true, 0);
+
+    button = gtk_button_new_with_label("kattele");
+    set_one_property(button, relief, GTK_RELIEF_NONE);
+    signal_connect_swapped(button, clicked, run_kattele, &window);
+    gtk_box_(pack_start, box, button, false, true, 0);
+    gtk_widget_grab_focus(button);
+
+    gtk_container_add(GTK_CONTAINER(window), box);
     //gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_MOUSE);
     signal_connect_swapped(window, delete-event, windowp_close, &window);
     signal_connect_swapped(window, button-press-event, windowp_close, &window);
@@ -271,7 +348,7 @@ gboolean button_press(GtkWidget * w, void * e, void * d)
 	buttonmenu(w);
 	G.valo = 0;
     }
-    if (G.cpid == 0)
+    if (G.ccount <= 0)
 	gtk_main_quit();
     return true;
 }
@@ -280,7 +357,7 @@ static
 gboolean key_press(void * w, GdkEventKey * k, void * d)
 {
     (void)w; (void)d;
-    if (G.cpid == 0)
+    if (G.ccount <= 0)
 	gtk_main_quit();
     else if (k->keyval == 'c' && k->state & GDK_CONTROL_MASK)
 	gtk_widget_hide(w);
@@ -374,6 +451,7 @@ static void log_open(void);
 int main(int argc, char * argv[])
 {
     init_G(argv[0]);
+    G.ppid = getpid();
     gtk_init(&argc, &argv);
     gtk_rc_parse("./gtk2-tummakahvi-muokattu.rc"); // if exists.
     BB;
@@ -488,10 +566,17 @@ int main(int argc, char * argv[])
 #endif
     gtk_widget_show_all(window);
 
-    _sigact(SIGCHLD, sigchld_handler);
+    signal(SIGCHLD, SIG_IGN);
     _sigact(SIGUSR1, sigusr1_handler);
 
-    G.cfd = run_prog(&argv[1]);
+    BB;
+    int pfd[2];
+    xpipe(pfd);
+    G.cfd = pfd[0];
+    G.rfd = pfd[1];
+    BE;
+
+    run_prog(&argv[1]);
 
     GIOChannel * iochannel = g_io_channel_unix_new(G.cfd);
 
@@ -618,10 +703,7 @@ static void log_open(void)
     int fd = open(buf, O_WRONLY|O_CREAT|O_APPEND, 0644);
     if (fd < 0)
 	die("Opening '%s' failed:", buf);
-    if (fd != 99) {
-	dup2(fd, 99);
-	close(fd);
-    }
+    movefd(fd, 99);
     struct stat st;
     if (fstat(3, &st) < 0)
 	die("fstat() failed:");
@@ -639,10 +721,7 @@ static void log_rotate(void)
     int fd = open(obuf, O_WRONLY|O_CREAT|O_APPEND, 0644);
     if (fd < 0)
 	die("Opening '%s' failed:", obuf);
-    if (fd != 99) {
-	dup2(fd, 99);
-	close(fd);
-    }
+    movefd(fd, 99);
     G.logsize = 0;
 }
 
@@ -682,7 +761,6 @@ static void log_chr(char c)
 gboolean read_process_input(GIOChannel * source,
 			    GIOCondition condition, gpointer data)
 {
-    (void)source;
     (void)condition;
 
     if (G.usr1) {
@@ -697,7 +775,7 @@ gboolean read_process_input(GIOChannel * source,
 	log_chr('\n');
 	unless (G.hold)
 	    gtk_main_quit();
-	/* no more data read -- and too shy to close fd */
+	g_io_channel_unref(source); // g_io_channel_unix_new()
 	return false;
     }
 
