@@ -85,6 +85,13 @@ style "clearlooks-wide" = "clearlooks-default"
   bg[PRELIGHT] = "#494949"
 }
 
+# added 2016-03-10 -- for more visible frame border
+style "clearlooks-wide-lighter" = "clearlooks-wide"
+{
+  bg[NORMAL]   = "#616161"
+  bg[PRELIGHT] = "#6B6B6B"
+}
+
 style "clearlooks-button" = "clearlooks-wide"
 {
   bg[NORMAL]   = "#414141"
@@ -189,7 +196,8 @@ style "clearlooks-spin" = "clearlooks-wide"
 
 class "GtkWidget" style "clearlooks-default"
 class "GtkRange" style "clearlooks-wide"
-class "GtkFrame" style "clearlooks-wide"
+class "GtkFrame" style "clearlooks-wide-lighter"
+class "GtkSeparator" style "clearlooks-wide-lighter"
 class "GtkSpinButton" style "clearlooks-spin"
 class "GtkStatusbar" style "clearlooks-wide"
 class "GtkMenu" style "clearlooks-menu"

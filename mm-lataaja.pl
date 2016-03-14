@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Wed 13 Jan 2016 20:18:53 EET too
-# Last modified: Thu 10 Mar 2016 19:07:39 +0200 too
+# Last modified: Mon 14 Mar 2016 19:44:23 +0200 too
 
 # Licensed under GPLv3
 
@@ -17,8 +17,8 @@ use strict;
 use warnings;
 use Cwd;
 
-#my $bitrate = 'best';
-my $bitrate = '2000';  # yritän rajoittaa max 1280x720 mun hitaalle htpc:lle
+die "Usage: $0 {tiedosto} {nökönopeus} (0|1(tekstikuvassa))\n"
+  unless @ARGV == 3;
 
 sub md($)
 {
@@ -30,6 +30,7 @@ sub md($)
 sub xexec(@)
 {
     print "\nSuoritetaan @_\n";
+    #exit 0;
     exec @_;
     die "exec failed: $!\n";
 }
@@ -40,13 +41,14 @@ die "tiedostohakemisto ei tiedossa\n" unless defined $hak and $hak;
 my $cwd = cwd();
 
 my $yle_dl = 'yle-dl';
-my @adobe_hsd;
+my @lisaa;
 if (-f "./yle-dl/$yle_dl") {
     my $ahsd = 'yle-dl/AdobeHDS.php';
     die "'$ahsd' ei sijaize $yle_dl:n kaverina polussa $cwd" unless -f $ahsd;
     $yle_dl = $cwd.'/yle-dl/'.$yle_dl;
-    @adobe_hsd = ( '--adobehds', "php $cwd/$ahsd" )
+    @lisaa = ( '--adobehds', "php $cwd/$ahsd" )
 }
+push @lisaa, '--hardsubs' if $ARGV[2] eq '1';
 
 md $hak;
 md "$hak/kesken";
@@ -108,11 +110,11 @@ unless (fork) {
     system qw/pkill -USR1 mm-tausta/;
     print "\nHuomaa: jotkut lataukset ovat aivan hiljaisia\n";
     #exec qw/urxvt -hold -e sh -c/, "echo $yle_dl";
-    xexec $yle_dl, qw/--latestepisode --backend adobehdsphp --hardsubs
-		      --maxbitrate/, $bitrate, @adobe_hsd, $url;
+    xexec $yle_dl, qw/--latestepisode --backend adobehdsphp
+		      --maxbitrate/, $ARGV[1], @lisaa, $url;
     # not reached
     xexec qw/urxvt -T lataaja -g 80x24 -fg limegreen -bg black +sb -e/,
-      $yle_dl, qw/--latestepisode --backend adobehdsphp/, @adobe_hsd, $url;
+      $yle_dl, qw/--latestepisode --backend adobehdsphp/, @lisaa, $url;
 }
 sleep 1 while wait == -1;
 exit if $?;

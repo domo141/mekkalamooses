@@ -16,7 +16,7 @@
  *	    All rights reserved
  *
  * Created: Fri 22 Jan 2016 20:22:03 +0200 too
- * Last modified: Mon 08 Feb 2016 21:36:52 +0200 too
+ * Last modified: Mon 14 Mar 2016 22:51:01 +0200 too
  */
 
 // Licensed under GPLv3
@@ -112,15 +112,10 @@ pid_t exec_command(const char * command, const char * s, ...)
 static
 struct {
     int go;
+    int nni;
 } G;
 
-
-static void clicked(void * b, void * d)
-{
-    (void)b;
-    G.go = (d != null);
-    gtk_main_quit();
-}
+static const char * nnt[6] = { "worst", "900", "1900", "2900", "5000", "best" };
 
 static
 gboolean motion_notify(void * w, GdkEventMotion * m, void * d)
@@ -135,6 +130,14 @@ gboolean motion_notify(void * w, GdkEventMotion * m, void * d)
 
 #define signal_connect(widget, signal, func, data) \
     g_signal_connect(widget, #signal, G_CALLBACK(func), data);
+
+
+static void clicked(void * b, void * d)
+{
+    (void)b;
+    G.go = (d != null);
+    gtk_main_quit();
+}
 
 static GtkWidget *
 tee_nappi_laatikkoon(GtkBox * box, int go, int f, const char * teksti)
@@ -153,26 +156,79 @@ tee_nappi_laatikkoon(GtkBox * box, int go, int f, const char * teksti)
     return b;
 }
 
+static void vaihtuva_muuttui(GtkToggleButton * button, ptrdiff_t nopeus)
+{
+    gboolean active = gtk_toggle_button_get_active(button);
+    if (active) {
+	// printf("%td %s\n", nopeus, nnt[nopeus]);
+	G.nni = nopeus;
+    }
+}
+
+static GtkWidget * vaihtuva_nappi(GtkWidget ** widget,
+				  const char * label, ptrdiff_t nopeus)
+{
+    if (*widget)
+	*widget = gtk_radio_button_new_with_label_from_widget
+	    /*                           */ (GTK_RADIO_BUTTON(*widget), label);
+    else
+	*widget = gtk_radio_button_new_with_label(NULL, label);
+
+    if (nopeus == G.nni)
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(*widget), true);
+
+    signal_connect(*widget, clicked, vaihtuva_muuttui, (void *)nopeus);
+    return *widget;
+}
+
 int main(int argc, char ** argv)
 {
     gtk_init(&argc, &argv);
     if (argc != 2) exit(2);
     gtk_rc_parse("./gtk2-tummakahvi-muokattu.rc"); // if exists.
+    GtkToggleButton * tkw;
     BB;
     GtkBox * vbox = GTK_BOX(gtk_vbox_new(false, 12));
     GtkBox * hbox = GTK_BOX(gtk_hbox_new(false, 12));
 
-    GtkWidget * label = gtk_label_new(null);
+    GtkWidget * widget = gtk_label_new(null);
+#define label widget
     gtk_label_set_markup(GTK_LABEL(label),
+	"<span font-size=\"large\">"
 	"Muistathan että voit ladata ohjelmia vain omaan käyttöön.\n"
 	"Näiden ohjelmien levittäminen ilman tekijänoikeuden haltian\n"
-	"lupaa <b>ei ole</b> sallittua.");
+	"lupaa <b>ei ole</b> sallittua.</span>");
     gtk_box_pack_start(vbox, label, true, true, 0);
-
+#undef label
     tee_nappi_laatikkoon(hbox, 1, 0, "Joo muistan");
     tee_nappi_laatikkoon(hbox, 0, 1, "En muista");
     tee_nappi_laatikkoon(hbox, 0, 0, "Ei tätä");
     gtk_box_pack_start(vbox, (GtkWidget *)hbox, true, true, 0);
+
+    hbox = GTK_BOX(gtk_hbox_new(false, 12));
+
+    widget = gtk_check_button_new_with_label("tekstit kuvassa");
+    gtk_box_pack_start(hbox, widget, true, true, 0);
+    tkw = GTK_TOGGLE_BUTTON(widget);
+
+    gtk_box_pack_start(hbox, gtk_vseparator_new(), true, true, 0);
+
+    widget = gtk_label_new("nökönopeus (mb):");
+    gtk_box_pack_start(hbox, widget, true, true, 0);
+
+    widget = null;
+    G.nni = 3;
+    gtk_box_pack_start(hbox, vaihtuva_nappi(&widget, "0", 0), true, true, 0);
+    gtk_box_pack_start(hbox, vaihtuva_nappi(&widget, "1", 1), true, true, 0);
+    gtk_box_pack_start(hbox, vaihtuva_nappi(&widget, "2", 2), true, true, 0);
+    gtk_box_pack_start(hbox, vaihtuva_nappi(&widget, "3", 3), true, true, 0);
+    gtk_box_pack_start(hbox, vaihtuva_nappi(&widget, "5", 4), true, true, 0);
+    gtk_box_pack_start(hbox, vaihtuva_nappi(&widget, "9", 5), true, true, 0);
+
+    gtk_box_pack_start(vbox, (GtkWidget *)hbox, true, true, 0);
+#define lbl "suattaapi olla että nökönoppeuven muuttamine vaekuttaapi johonnii"
+    gtk_box_pack_start(vbox, gtk_label_new(lbl), true, true, 0);
+#undef label
 
     GtkWidget * window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(window), argv[1]);
@@ -194,6 +250,7 @@ int main(int argc, char ** argv)
     alarm(0);
 
     if (G.go)
-	exec_command("./mm-lataaja.pl", argv[1], null);
+	exec_command("./mm-lataaja.pl", argv[1], nnt[G.nni],
+		     gtk_toggle_button_get_active(tkw)? "1": "0", null);
     return 0;
 }
