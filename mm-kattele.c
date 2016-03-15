@@ -15,7 +15,7 @@
  *          All rights reserved
  *
  * Created: Mon 29 Feb 2016 19:18:15 EET too
- * Last modified: Mon 14 Mar 2016 20:58:09 +0200 too
+ * Last modified: Tue 15 Mar 2016 19:00:05 +0200 too
  */
 
 
@@ -97,7 +97,6 @@ struct {
     char * mem;
     int cnt;
     int * offs;
-    int * flgs; // XXX going away.
     pid_t cpid;
     GtkWidget * window;
 #define MAX_ROWS 12
@@ -191,7 +190,21 @@ static void env_exists(const char * name)
 	die("Ympäristömuuttujaa '%s' ei asetettu.", name);
 }
 
-static void read_vnames(void)
+static int update_lengths(int lt[4][2], int dist, int mtl, int index)
+{
+    // XXX should get utf-8 length in arg... but perhaps good enough anyway.
+    for (int i = 0; i < 4; i++) {
+	if (mtl >= lt[i][0]) {
+	    lt[i][0] = dist;
+	    lt[i][1] = index;
+	    for (i++; i < 4; i++) if (lt[i][0] < dist) dist = lt[i][0];
+	    break;
+	}
+    }
+    return dist;
+}
+
+static void read_vnames(int lt[4][2])
 {
     int pipefd[2];
     if (pipe(pipefd) < 0)
@@ -207,18 +220,18 @@ static void read_vnames(void)
     // parent
     close(pipefd[1]);
 #define MM_SIZE (1024 * 1024)
-    // note: related values may need to be changed is above is: 131072 & 65520
+    // note: related values may need to be changed if above is: 65536 & 65520
     char * mem = mmap(null, MM_SIZE, PROT_READ|PROT_WRITE,
 		      MAP_PRIVATE|MAP_ANONYMOUS, -1, 0); // XXX linux only flags
     if (mem == null)
 	die("mmap() failed:");
     char * p = mem;
     int l, tl = 0;
-    while ((l = read(pipefd[0], p, MM_SIZE - 131072 - tl)) > 0) {
+    while ((l = read(pipefd[0], p, MM_SIZE - 65536 - tl)) > 0) {
 	tl = tl + l;
 	p = p + l;
     }
-    if (tl >= MM_SIZE - 131072)
+    if (tl >= MM_SIZE - 65536)
 	die("Liikaa tietoa (eli vajaa megatavu videotiedostojen nimiä)");
 #undef MM_SIZE
     close(pipefd[0]);
@@ -234,21 +247,24 @@ static void read_vnames(void)
 
     int32_t * r = (int32_t *)p;
     p = mem;
-    int i = 0;
 
     while (*p != '\n' && p < q)
 	p++;
     if (p < q)
 	p++;
+    int i = 0;
+    int mtl = 0;
     while (p[0] == '/' && p[1] == '/') {
 	if (i >= 65520 / isizeof (int32_t)) // XXX a "sufficient" bounds check?
 	    break;
 	char *s = p + 2;
-	r[i++] = s - mem;
+	r[i] = s - mem;
 	while (*s != '/' && s < q)
 	    s++;
 	if (*s == '/') {
 	    int dist = s - p - 1;
+	    if (dist > mtl)
+		mtl = update_lengths(lt, dist, mtl, i);
 	    p[0] = dist / 256;
 	    p[1] = dist % 256;
 	    *s++ = '\0';
@@ -261,6 +277,7 @@ static void read_vnames(void)
 	if (*s != '\n')
 	    break;
 	p = s + 1;
+	i++;
     }
     // varmistetaan vielä uuestaan...
     if (p[-2] != '\0')
@@ -268,9 +285,6 @@ static void read_vnames(void)
     G.mem = mem;
     G.cnt = i;
     G.offs = r;
-    G.flgs = r + i;
-    // although mmap should do this we don't want any surprises.
-    memset(G.flgs, 0, 65520);
 #if 0
     for (i = 0; i < G.cnt; i++) {
 	printf("%3d %5d %s\n", i, G.offs[i], G.mem + G.offs[i]);
@@ -556,18 +570,48 @@ static void clicked(void * d /*, ... */)
     gtk_widget_grab_focus(grab_widget);
 }
 
+static int label_width(int lt[4][2])
+{
+    // return 150;
+    if (lt[0][0] == 0) // unlikely
+	return 200;
+
+    GtkWidget * label = gtk_label_new(G.mem + G.offs[lt[0][1]]);
+    int width = 0;
+    int i = 0;
+    while (true) {
+	GtkRequisition req;
+	gtk_widget_size_request(label, &req);
+	// printf("%d %d %d %d %d\n", i,lt[i][0],lt[i][1],req.width,width);
+	if (req.width > width)
+	    width = req.width;
+	i++;
+	if (i >= 4)
+	    break;
+	gtk_label_(set_text, label, G.mem + G.offs[lt[i][1]]);
+    }
+    gtk_widget_destroy(label);
+    return width > 900? 900: width;
+}
+
 int main(int argc, char ** argv)
 {
     env_exists("MM_TIEDOSTOHAKEMISTO");
     fork_me();
     _sigact(SIGCHLD, sigchld_handler);
-    read_vnames();
+    int lw;
+    BB;
+    int lt[4][2];
+    memset(lt, 0, sizeof lt);
+    read_vnames(lt);
 
     G.kielet = getenv("MM_KATTELE_KIELET");
     if (G.kielet == null)
 	G.kielet = "ei";
 
     gtk_init(&argc, &argv);
+    lw = label_width(lt);
+    BE;
     gtk_rc_parse("./gtk2-tummakahvi-muokattu.rc"); // if exists.
 
     G.window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -582,8 +626,8 @@ int main(int argc, char ** argv)
     GtkWidget * hbox = null;
     G.rows = G.cnt;
     if (G.cnt > MAX_ROWS) {
-	G.adjustment = GTK_ADJUSTMENT(gtk_adjustment_new(0, 0, G.cnt + 0.9999,
-							 1,MAX_ROWS,MAX_ROWS));
+	G.adjustment = GTK_ADJUSTMENT(
+	    gtk_adjustment_new(0, 0, G.cnt + 0.9999, 1,MAX_ROWS,MAX_ROWS));
 	GtkWidget * scrollbar = gtk_vscrollbar_new(G.adjustment);
 	hbox = gtk_hbox_new(false, 2);
 	gtk_box_(pack_end, hbox, scrollbar, false, false, 0);
@@ -601,13 +645,16 @@ int main(int argc, char ** argv)
 	button = gtk_button_new();
 	set_one_property(button, relief, GTK_RELIEF_NONE);
 	GtkWidget * label = gtk_label_new(G.mem + G.offs[i]);
+	if (hbox) {
+	    if (i == 0)
+		signal_connect_swapped(button, key-press-event, key_press, 0);
+	    set_one_property(label, width-request, lw);
+	}
 	gtk_container_(add, button, label);
 	gtk_misc_(set_alignment, label, 0.0, 0.5);
 	gtk_box_(pack_start, fbox, button, true, true, 0);
 	G.labels[i] = label;
 	signal_connect_swapped(button, clicked, clicked, &((char *)0)[i]);
-	if (i == 0 && hbox)
-	    signal_connect_swapped(button, key-press-event, key_press, null);
     }
     if (hbox) {
 	signal_connect_swapped(button, key-press-event, key_press, (void *)1);
