@@ -18,7 +18,7 @@
  *
  * Created: Mon 01 Jun 2015 22:19:23 EEST too // telekkarista-wkg.c
  * Created: Mon 11 Jan 2016 20:48:31 EET too // mm-selain.c
- * Last modified: Tue 08 Mar 2016 13:11:42 +0200 too
+ * Last modified: Wed 16 Mar 2016 22:35:18 +0200 too
  */
 
 // Licensed under GPLv3
@@ -813,9 +813,11 @@ int main(int argc, char* argv[])
 
     //g_object_set (G_OBJECT(settings), "user-agent", "jep", null);
 
-    set_one_web_setting(settings, enable-accelerated-compositing, true);
-    // no effect (next 1)
-    //set_one_web_setting(settings, enable-webgl, true);
+    // in some systems this makes web_view slow to get (X) events...
+    // until this can be fixed/detected keeping it outcommented is safer choice
+    //set_one_web_setting(settings, enable-accelerated-compositing, true);
+
+    set_one_web_setting(settings, enable-webgl, true); // <may(not) have effect
     set_one_web_setting(settings, enable-private-browsing, true);
     //set_one_web_setting(settings, enable-spatial-navigation, true);
 
