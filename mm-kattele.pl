@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Mon 29 Feb 2016 19:50:38 EET too
-# Last modified: Thu 10 Mar 2016 23:52:00 +0200 too
+# Last modified: Tue 15 Mar 2016 22:03:08 +0200 too
 
 use 5.8.1;
 use strict;
@@ -71,14 +71,14 @@ if ($ARGV[0] eq 'poista')
     $_ = $ARGV[1];
     s/[.][^.]+$// or die "Outo tiedostonnimi: $ARGV[1]\n";
     my $fn = $_;
-    (length) >= 8 or die "Yllättävän lyhyt tiedostonnimi: $ARGV[1]\n";
+    (length) >= 4 or die "Yllättävän lyhyt tiedostonnimi: $ARGV[1]\n";
     my @lt = localtime;
     my @wd = qw/su ma ti ke to pe la/;
     my $day = sprintf
       "%d-%02d-%02d-%s", $lt[5] + 1900, $lt[4] + 1, $lt[3], @wd[$lt[6]];
     my $dir = "kesken/p-$day";
     unless (-d $dir) {
-	mkdir $dir || die "Hakemiston '$dir' luonti ei onnistunut: $!\n";
+	mkdir $dir or die "Hakemiston '$dir' luonti ei onnistunut: $!\n";
     }
     #print "$fn, ", <$fn*>, "\n";
     rename $_, "$dir/$_" for (<$fn*>);

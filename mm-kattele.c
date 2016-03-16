@@ -15,7 +15,7 @@
  *          All rights reserved
  *
  * Created: Mon 29 Feb 2016 19:18:15 EET too
- * Last modified: Tue 15 Mar 2016 19:00:05 +0200 too
+ * Last modified: Wed 16 Mar 2016 17:35:19 +0200 too
  */
 
 
@@ -236,7 +236,9 @@ static void read_vnames(int lt[4][2])
 #undef MM_SIZE
     close(pipefd[0]);
     wait(null);
-    if (tl < 2 || p[-1] != '\n' || p[-2] != '/')
+    if (tl < 3)
+	die("Ei katsottavia tiedostoja");
+    if (p[-1] != '\n' || p[-2] != '/')
 	die("sisällön loppu ei oletetunlainen");
     char * q = p++;
     *q = '\0';
@@ -371,28 +373,55 @@ static void adjm_changed(GtkAdjustment * adjm /*, void * d*/)
     }
 }
 
+static inline void scroll_down(void)
+{
+    if (G.offset < G.cnt - MAX_ROWS)
+	gtk_adjustment_set_value(G.adjustment, G.offset + 1.9);
+
+}
+static inline void scroll_up(void)
+{
+    if (G.offset > 0)
+	gtk_adjustment_set_value(G.adjustment, G.offset - 1.0);
+
+}
+
 static gboolean key_press(void * last, GdkEventKey * k)
 {
     //printf("keypress: %p %p -- ", last, k);
-    printf("%x %d, %x\n", k->keyval, k->keyval, k->state);
+    //printf("%x %d, %x\n", k->keyval, k->keyval, k->state);
     if ((k->state & (0x0f)) != 0) // shift lock control mod1
 	return false;
     if (last) {
 	if (k->keyval == GDK_Down) {
-	    if (G.offset < G.cnt - MAX_ROWS)
-		gtk_adjustment_set_value(G.adjustment, G.offset + 1.9);
+	    scroll_down();
 	    return true;
 	}
     }
     else {
 	if (k->keyval == GDK_Up) {
-	    if (G.offset > 0)
-		gtk_adjustment_set_value(G.adjustment, G.offset - 1.0);
+	    scroll_up();
 	    return true;
 	}
     }
     return false;
 }
+
+static gboolean scroll_event(void * wid, GdkEventScroll * s)
+{
+    (void)wid;
+    //printf("button scroll: %p %d\n", s, s->direction);
+
+    /**/ if (s->direction == GDK_SCROLL_DOWN)
+	scroll_down();
+    else if (s->direction == GDK_SCROLL_UP)
+	scroll_up();
+    else
+	return false;
+
+    return true;
+}
+
 
 static void rb_toggled(GtkWidget * button, char * p)
 {
@@ -591,7 +620,7 @@ static int label_width(int lt[4][2])
 	gtk_label_(set_text, label, G.mem + G.offs[lt[i][1]]);
     }
     gtk_widget_destroy(label);
-    return width > 900? 900: width;
+    return width > 900? 900: (width < 80? 80: width);
 }
 
 int main(int argc, char ** argv)
@@ -645,19 +674,20 @@ int main(int argc, char ** argv)
 	button = gtk_button_new();
 	set_one_property(button, relief, GTK_RELIEF_NONE);
 	GtkWidget * label = gtk_label_new(G.mem + G.offs[i]);
-	if (hbox) {
-	    if (i == 0)
-		signal_connect_swapped(button, key-press-event, key_press, 0);
-	    set_one_property(label, width-request, lw);
-	}
+	set_one_property(label, width-request, lw);
 	gtk_container_(add, button, label);
 	gtk_misc_(set_alignment, label, 0.0, 0.5);
 	gtk_box_(pack_start, fbox, button, true, true, 0);
 	G.labels[i] = label;
 	signal_connect_swapped(button, clicked, clicked, &((char *)0)[i]);
+	if (i == 0 && hbox)
+	    signal_connect_swapped(button, key-press-event, key_press, null);
     }
     if (hbox) {
 	signal_connect_swapped(button, key-press-event, key_press, (void *)1);
+	signal_connect(G.window, scroll-event, scroll_event, null);
+	gtk_widget_add_events(G.window, GDK_SCROLL_MASK);
+
 	gtk_box_(pack_start, hbox, fbox, false, false, 0);
 	fbox = hbox;
     }
