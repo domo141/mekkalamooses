@@ -16,7 +16,7 @@
  *          All rights reserved
  *
  * Created: Sun 24 Jan 2016 12:26:05 EET too
- * Last modified: Sat 06 Feb 2016 13:37:58 +0200 too
+ * Last modified: Thu 17 Mar 2016 17:01:00 +0200 too
  */
 
 // Licensed under GPLv3
@@ -103,9 +103,10 @@ int main(int argc, char ** argv)
     gtk_label_set_markup(GTK_LABEL(label), buf);
     GtkWidget * window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(window), argv[1]);
-    gtk_container_set_border_width(GTK_CONTAINER(window), 8);
+    gtk_container_set_border_width(GTK_CONTAINER(window), 16);
     gtk_container_add(GTK_CONTAINER(window), label);
     gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
+    gtk_window_set_keep_above(GTK_WINDOW(window), 1);
     signal_connect(window, delete-event, gtk_main_quit, null);
     signal_connect(window, button-press-event, gtk_main_quit, null);
     gtk_widget_add_events(GTK_WIDGET(window), GDK_BUTTON_PRESS_MASK);

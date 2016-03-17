@@ -15,7 +15,7 @@
  *          All rights reserved
  *
  * Created: Mon 29 Feb 2016 19:18:15 EET too
- * Last modified: Wed 16 Mar 2016 17:35:19 +0200 too
+ * Last modified: Thu 17 Mar 2016 17:21:36 +0200 too
  */
 
 
@@ -302,32 +302,19 @@ static void fork_me(void)
     char buf[4] = {0,0,0,0};
     (void)fread(buf, 1, 3, fh);
     pclose(fh);
-    if (buf[0] != '1' || isdigit(buf[1])) {
-	/**/ if (isspace(buf[1])) buf[1] = '\0';
-	else if (isspace(buf[2])) buf[2] = '\0';
-	die("pgrep -c mm-kattele printed: '%s'", buf);
-    }
-#if 0
-    if (xfork() == 0)
-	exec_command("/bin/sh", "-c" "exec pgrep mm-kattele", null);
-    while (1) {
-	int status;
-	if (wait(&status) < 0) {
-	    if (errno != EINTR)
-		die("unexpected wait() error:");
-	    continue;
+    if (isspace(buf[1]) || buf[1] == '\0') {
+	if (buf[0] == '1') {
+	    if (xfork())
+		exit(0); // parent
+	    else
+		return;  // child
 	}
-	if (!WIFEXITED(status))
-	    die("abnormal child (pgrep) process exit...");
-	if (WEXITSTATUS(status) != 1)
-	    die("pgrep() did not exit 1");
-	break;
+	if (buf[0] == '2')
+	    exit(0);
     }
-#endif
-    if (xfork()) {
-	//sleep(1);
-	exit(0);
-    }
+    /**/ if (isspace(buf[1])) buf[1] = '\0';
+    else if (isspace(buf[2])) buf[2] = '\0';
+    die("'pgrep -c mm-kattele' tulosti: '%s'", buf);
 }
 
 #define gtk_widget_(fn, wid, ...) \
@@ -403,6 +390,20 @@ static gboolean key_press(void * last, GdkEventKey * k)
 	    scroll_up();
 	    return true;
 	}
+    }
+    return false;
+}
+
+static gboolean tw_key_press(GtkWindow * tw, GdkEventKey * k)
+{
+    (void)tw;
+    static guint32 prev_time;
+    //printf("twkp: %d  %x %d  %x\n", k->time, k->keyval, k->keyval, k->state);
+    if (k->keyval == 'q') {
+	if (k->time - prev_time < 200) // double-q in 200 milliseconds
+	    gtk_main_quit();
+	else
+	    prev_time = k->time;
     }
     return false;
 }
@@ -666,6 +667,7 @@ int main(int argc, char ** argv)
 
     signal_connect(G.window, delete-event, gtk_main_quit, null);
     signal_connect(G.window, destroy, gtk_main_quit, null);
+    signal_connect(G.window, key-press-event, tw_key_press, null);
 
     GtkWidget * fbox = gtk_vbox_new(false, 0);
 

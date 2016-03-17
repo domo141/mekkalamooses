@@ -17,7 +17,7 @@
  *
  * Created: Wed 29 Apr 2009 20:19:00 EEST too
  * Created: Sun 14 Jun 2015 10:42:38 +0300 too
- * Last modified: Wed 02 Mar 2016 22:33:45 +0200 too
+ * Last modified: Thu 17 Mar 2016 17:06:45 +0200 too
  */
 
 // Licensed under GPLv3
@@ -208,6 +208,7 @@ int main(int argc, char ** argv)
     gtk_container_set_border_width(GTK_CONTAINER(window), 12);
     gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(box));
     gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
+    gtk_window_set_keep_above(GTK_WINDOW(window), true);
 
     signal_connect(window, delete-event, gtk_main_quit, null);
     signal_connect(window, destroy, gtk_main_quit, null);

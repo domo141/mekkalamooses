@@ -16,7 +16,7 @@
  *	    All rights reserved
  *
  * Created: Fri 22 Jan 2016 20:22:03 +0200 too
- * Last modified: Mon 14 Mar 2016 22:51:01 +0200 too
+ * Last modified: Thu 17 Mar 2016 17:11:24 +0200 too
  */
 
 // Licensed under GPLv3
@@ -235,6 +235,7 @@ int main(int argc, char ** argv)
     gtk_container_set_border_width(GTK_CONTAINER(window), 12);
     gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(vbox));
     gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_MOUSE);
+    gtk_window_set_keep_above(GTK_WINDOW(window), true);
 
     signal_connect(window, delete-event, gtk_main_quit, null);
     signal_connect(window, destroy, gtk_main_quit, null);

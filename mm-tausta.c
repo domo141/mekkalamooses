@@ -17,7 +17,7 @@
  *	    All rights reserved
  *
  * Created: Tue 25 Sep 2012 22:10:56 EEST too
- * Last modified: Sat 12 Mar 2016 23:29:07 +0200 too
+ * Last modified: Thu 17 Mar 2016 17:12:17 +0200 too
  */
 
 // Licensed under GPLv3
@@ -313,14 +313,14 @@ static void buttonmenu(GtkWidget * mainwin)
 
     GtkWidget * button, * box = gtk_hbox_new(false, 4);
 
-    button = gtk_button_new_with_label("pysäytä lataukset");
+    button = gtk_button_new_with_label("pysäytä lataus");
     set_one_property(button, relief, GTK_RELIEF_NONE);
     signal_connect_swapped(button, clicked, pkill_lataajat, &window);
     gtk_box_(pack_start, box, button, false, true, 0);
 
     gtk_box_(pack_start, box, gtk_vseparator_new(), false, true, 0);
 
-    button = gtk_button_new_with_label("kattele");
+    button = gtk_button_new_with_label(" kattele ");
     set_one_property(button, relief, GTK_RELIEF_NONE);
     signal_connect_swapped(button, clicked, run_kattele, &window);
     gtk_box_(pack_start, box, button, false, true, 0);
@@ -354,13 +354,13 @@ gboolean button_press(GtkWidget * w, void * e, void * d)
 }
 
 static
-gboolean key_press(void * w, GdkEventKey * k, void * d)
+gboolean key_press(GtkWindow * w, GdkEventKey * k, void * d)
 {
-    (void)w; (void)d;
+    (void)d;
     if (G.ccount <= 0)
 	gtk_main_quit();
     else if (k->keyval == 'c' && k->state & GDK_CONTROL_MASK)
-	gtk_widget_hide(w);
+	gtk_window_iconify(w);
     return true;
 }
 
@@ -489,7 +489,7 @@ int main(int argc, char * argv[])
     gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
     gtk_window_set_icon_from_file(GTK_WINDOW(window), "mm-ikoni.png", null);
 
-    signal_connect(window, delete-event, gtk_widget_hide, null);
+    signal_connect(window, delete-event, gtk_window_iconify, null);
 
     tee_tilaikoni(window);
     gtk_widget_realize(window);
