@@ -17,7 +17,7 @@
  *
  * Created: Wed 29 Apr 2009 20:19:00 EEST too
  * Created: Sun 14 Jun 2015 10:42:38 +0300 too
- * Last modified: Thu 17 Mar 2016 17:06:45 +0200 too
+ * Last modified: Thu 17 Mar 2016 17:37:54 +0200 too
  */
 
 // Licensed under GPLv3
@@ -156,11 +156,12 @@ static void bc2(void) { set_cb(bcy, "2"); }
 static void bct(void) { set_cb(bcy, "t"); }
 static void bcf(void) { set_cb(bcy, "f"); }
 
-static void bcs(const char * k)
+static void bcx(const char * x)
 {
-    exec_command("./mm-selain", k, null);
+    exec_command(x, null, null);
 }
-static void bcp(void) { set_cb(bcs, ""); }
+static void bck(void) { set_cb(bcx, "./mm-kattele"); }
+static void bcp(void) { set_cb(bcx, "./mm-selain"); }
 
 static
 GtkWidget * tee_nappi_laatikkoon(GtkBox * box, void (*cb)(void),
@@ -200,6 +201,7 @@ int main(int argc, char ** argv)
     tee_nappi_laatikkoon(box, bc2, "Katso Yle TV 2:ta suorahkona (vlcllä)");
     tee_nappi_laatikkoon(box, bct, "Katso Yle Teemaa suorahkona (vlcllä)");
     tee_nappi_laatikkoon(box, bcf, "Katso Yle Femmiä suorahkona (vlcllä)");
+    tee_nappi_laatikkoon(box, bck, "Kattele ja poista ladattuja");
     tee_nappi_laatikkoon(box, bcp, "Plaraile muita ohjelmia");
 
     GtkWidget * window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
