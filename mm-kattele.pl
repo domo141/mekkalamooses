@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Mon 29 Feb 2016 19:50:38 EET too
-# Last modified: Tue 15 Mar 2016 22:03:08 +0200 too
+# Last modified: Sat 19 Mar 2016 17:25:59 +0200 too
 
 use 5.8.1;
 use strict;
@@ -103,7 +103,10 @@ if ($ARGV[0] eq 'vlclla')
 if ($ARGV[0] eq 'mplayerillä')
 {
     my @opts;
-    push @opts, ('-utf8', '-sub', getsrt) if defined $ARGV[2];
+    # unfortunately mplayer & mplayer2 do not share same command line option
+    # here (mplayer2 does not need it) -- and then there are -subcp vs --subcp
+    push @opts, '-utf8' unless -d '/usr/share/mplayer2';  # XXX dummy heuristic
+    push @opts, ('-sub', getsrt) if defined $ARGV[2];
 
     exec 'mplayer', qw/-fs -quiet -osd-duration 2000 -af scaletempo -ontop
 		       -noautosub -cache 8192 -cache-min 1/, @opts, $ARGV[1];
