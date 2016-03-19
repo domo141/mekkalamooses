@@ -18,7 +18,7 @@
  *
  * Created: Mon 01 Jun 2015 22:19:23 EEST too // telekkarista-wkg.c
  * Created: Mon 11 Jan 2016 20:48:31 EET too // mm-selain.c
- * Last modified: Wed 16 Mar 2016 22:35:18 +0200 too
+ * Last modified: Sat 19 Mar 2016 18:26:38 +0200 too
  */
 
 // Licensed under GPLv3
@@ -188,6 +188,7 @@ struct {
     regex_t preg1;
     regex_t preg2;
     WebKitWebView * web_view;
+    GtkWidget * addrlw;
     char ** argv; // for execvp :/ (XXX gtk args gets lost if any)
 } G;
 
@@ -403,14 +404,47 @@ void cairo_paint(cairo_t * cr) { (void)cr; }
     gtk_bin_ ## fn(GTK_BIN(wid), ##__VA_ARGS__)
 #endif
 
-#define set_one_web_setting(settings, name, state) \
-    g_object_set (G_OBJECT(settings), #name, state, null)
+#define set_one_property(object, name, state) \
+    g_object_set (G_OBJECT(object), #name, state, null)
 
 #define signal_connect(widget, signal, func, data) \
     g_signal_connect(widget, #signal, G_CALLBACK(func), data);
-
 #define signal_connect_swapped(widget, signal, func, data) \
     g_signal_connect_swapped(widget, #signal, G_CALLBACK(func), data);
+
+
+static void back(void)
+{
+    webkit_web_view_go_back(G.web_view);
+}
+
+static void forward(void)
+{
+    webkit_web_view_go_forward(G.web_view);
+}
+
+static void beginning(void)
+{
+    WebKitWebBackForwardList * wkbfl
+        = webkit_web_view_get_back_forward_list(G.web_view);
+    webkit_web_back_forward_list_clear(wkbfl);
+    webkit_web_view_load_uri(G.web_view, ALKURI);
+}
+
+static void reload(void)
+{
+    webkit_web_view_reload(G.web_view);
+}
+
+static void stopp(void)
+{
+    run_command("/usr/bin/pkill", "-s", "0", "php", null);
+}
+
+static void vieww(void)
+{
+    run_command("./mm-kattele", null, null);
+}
 
 static void restart(void /* GtkButton *button, gpointer user_data */)
 {
@@ -420,59 +454,6 @@ static void restart(void /* GtkButton *button, gpointer user_data */)
     die("execvp(%s) failed:", G.argv[0]);
 }
 
-static void move_cqw(GtkWidget * cqw, GdkRectangle * a, GtkWidget * mainwin)
-{
-    GdkWindow * gdkwindow = gtk_widget_get_window(mainwin);
-    gint mx, my, mwx, mwy;
-    gdk_window_get_pointer(gdkwindow, &mx, &my, null);
-    gdk_window_get_position(gdkwindow, &mwx, &mwy);
-    GtkAllocation mwa;
-    gtk_widget_get_allocation(mainwin, &mwa);
-#if 0
-    dz dix(mx) cmm dix(my) cmm
-        dix(mwa.width) cmm dix(mwa.height) cmm dix(mwx) cmm dix(mwy) dw;
-    dz dix(a->width) cmm dix(a->height) cmm dix(a->x) cmm dix(a->y) dw;
-#endif
-    // 32, just arbitrary value
-    if (abs(mx - mwa.width) < 32 && abs(my) < 32) {
-        gtk_window_(move, cqw, mwx + mwa.width - a->width - 0, mwy + 0);
-    }
-    else if (abs(mx) < 32 && abs(my) < 32) {
-        gtk_window_(move, cqw, mwx + 0, mwy + 0);
-    }
-    // else don't move //
-}
-
-static gboolean close_cqw(GtkWidget ** window_p /*, GtkWidget * widget */)
-{
-    if (*window_p) {
-        gtk_widget_destroy(*window_p);
-        *window_p = null;
-    }
-    return true;
-}
-#if 0
-/* there is also something like g_*_true() to do exactly the same...*/
-static gboolean ignore_motion_notify(void)
-{
-    return true;
-}
-#endif
-
-static void back(GtkWidget ** window_p /*, GtkWidget * b */)
-{
-    webkit_web_view_go_back(G.web_view);
-    close_cqw(window_p);
-}
-
-static void beginning(GtkWidget ** window_p /*, GtkWidget * b */)
-{
-    WebKitWebBackForwardList * wkbfl
-        = webkit_web_view_get_back_forward_list(G.web_view);
-    webkit_web_back_forward_list_clear(wkbfl);
-    webkit_web_view_load_uri(G.web_view, ALKURI);
-    close_cqw(window_p);
-}
 
 #if 1
 static void destroy_toplevels_main_quit(void)
@@ -492,74 +473,6 @@ static void destroy_toplevels_main_quit(void)
 }
 #endif
 
-static gboolean delete_event_cb(GtkWidget * mainwin /*, void * p */)
-{
-    static GtkWidget * window = null;
-
-    if (window) {
-        gtk_widget_destroy(window);
-        window = null;
-        return true;
-    }
-    window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    signal_connect_swapped(window, delete-event, close_cqw, &window);
-
-    GtkBox * box = GTK_BOX(gtk_hbox_new(false, 0));
-    GtkWidget * b;
-
-    if (webkit_web_view_can_go_back(G.web_view)) {
-        b = gtk_button_new();
-#if 1
-        GtkWidget * l = gtk_label_new(null);
-        // use spaces to widen button child (w/ gtk_misc somewhat complicated)
-        gtk_label_set_markup(GTK_LABEL(l),
-                             " <span font-size=\"x-large\">◀</span> ");
-        gtk_container_(add, b, l);
-#else
-        gtk_container_(add, b, gtk_image_new_from_stock(GTK_STOCK_GO_BACK,
-                                                        GTK_ICON_SIZE_BUTTON));
-#endif
-        signal_connect_swapped(b, clicked, back, &window);
-        gtk_box_pack_start(box, b, false, false, 6);
-
-        b = gtk_button_new_with_label(" palaa \n alkuun ");
-        signal_connect_swapped(b, clicked, beginning, &window);
-        gtk_box_pack_start(box, b, false, false, 6);
-#if 0
-        b = gtk_button_new();
-        signal_connect_swapped(b, clicked, close_cqw, &window);
-        gtk_box_pack_start(box, b, false, false, 2);
-        gtk_widget_grab_focus(b);
-#endif
-    }
-    b = gtk_button_new_with_label(" käynnistä \n uudelleen ");
-    signal_connect(b, clicked, restart, null);
-    gtk_box_pack_start(box, b, false, false, 6);
-
-    b = gtk_button_new_with_label(" lopeta ");
-    signal_connect(b, clicked, destroy_toplevels_main_quit, null);
-    gtk_box_pack_start(box, b, false, false, 6);
-    gtk_widget_grab_focus(b);
-
-    GtkWidget * frame = gtk_frame_new(null);
-    gtk_container_(add, window, frame);
-    //gtk_container_(set_border_width, window, 2);
-    gtk_container_(set_border_width, box, 10);
-    gtk_container_(add, frame, GTK_WIDGET(box));
-
-    gtk_window_(set_decorated, window, false);
-    gtk_window_(set_resizable, window, false);
-    //gtk_window_(set_position, window, GTK_WIN_POS_MOUSE);
-
-    signal_connect(window, size-allocate, move_cqw, mainwin);
-    signal_connect_swapped(window, focus-out-event, close_cqw, &window);
-
-    //gtk_window_(set_transient_for, window, GTK_WINDOW(mainwin));
-    gtk_widget_(show_all, window); // argh, pedantic (now remowed)
-    gtk_window_(present, window);
-
-    return true;
-}
 
 // informational message only
 static gboolean download_requested(WebKitWebView  * web_view,
@@ -670,13 +583,14 @@ static gboolean navigation_policy_decision_requested(
     pt = ct;
     ph = ch;
 
-    if (! nomatch) {
+    if (nomatch == 0) {
         run_command("./mm-kysely", uri, null);
         if (! regexec(&G.preg2, uri, 0, null, 0)) {
             webkit_web_policy_decision_ignore(policy_decision);
             return true;
         }
     }
+    gtk_label_(set_text, G.addrlw, uri);
     return false;
 }
 
@@ -772,6 +686,57 @@ static int is_geometry_string(char * str)
     return *str == '\0';
 }
 
+static void create_top_hbox(GtkBox * vbox)
+{
+    GtkBox * hbox = GTK_BOX(gtk_hbox_new(false, 0));
+
+    GtkWidget *
+    w = gtk_button_new_with_label("←");
+    set_one_property(w, relief, GTK_RELIEF_NONE);
+    signal_connect(w, clicked, back, null);
+    gtk_box_pack_start(hbox, w, false, true, 0);
+
+    w = gtk_button_new_with_label("→");
+    set_one_property(w, relief, GTK_RELIEF_NONE);
+    signal_connect(w, clicked, forward, null);
+    gtk_box_pack_start(hbox, w, false, true, 0);
+
+    w = gtk_button_new_with_label("↑");
+    set_one_property(w, relief, GTK_RELIEF_NONE);
+    signal_connect(w, clicked, beginning, null);
+    gtk_box_pack_start(hbox, w, false, true, 0);
+
+    w = gtk_button_new_with_label("⟳");
+    set_one_property(w, relief, GTK_RELIEF_NONE);
+    signal_connect(w, clicked, reload, null);
+    gtk_box_pack_start(hbox, w, false, true, 0);
+
+    gtk_box_pack_start(hbox, gtk_label_new("│"), false, true, 0);
+
+    w = gtk_label_new(null);
+    gtk_misc_(set_alignment, w, 0.0, 0.5);
+    gtk_misc_(set_padding, w, 5, 1);
+    gtk_box_pack_start(hbox, w, true, true, 0);
+    G.addrlw = w;
+
+    w = gtk_button_new_with_label("pysäytä lataus");
+    set_one_property(w, relief, GTK_RELIEF_NONE);
+    signal_connect(w, clicked, stopp, null);
+    gtk_box_pack_start(hbox, w, false,true, 0);
+
+    w = gtk_button_new_with_label(" kattele ");
+    set_one_property(w, relief, GTK_RELIEF_NONE);
+    signal_connect(w, clicked, vieww, null);
+    gtk_box_pack_start(hbox, w, false,true, 0);
+
+    w = gtk_button_new_with_label("uusix.");
+    set_one_property(w, relief, GTK_RELIEF_NONE);
+    signal_connect(w, clicked, restart, null);
+    gtk_box_pack_start(hbox, w, false,true, 0);
+
+    gtk_box_pack_start(vbox, GTK_WIDGET(hbox), false, true, 0);
+}
+
 int main(int argc, char* argv[])
 {
     gtk_init(&argc, &argv);
@@ -813,29 +778,40 @@ int main(int argc, char* argv[])
 
     //g_object_set (G_OBJECT(settings), "user-agent", "jep", null);
 
-    // in some systems this makes web_view slow to get (X) events...
-    // until this can be fixed/detected keeping it outcommented is safer choice
-    //set_one_web_setting(settings, enable-accelerated-compositing, true);
+    // in some systems this when "accelerated compositing" is enabled,
+    // second connection to X server is made, and poll(2) from that fd
+    // lags like hmm. ~400 ms before there is data. this makes this browser
+    // unusable. until we know how to detect where this is usable,
+    // this setting is outcommented.
+    // set_one_property(settings, enable-accelerated-compositing, true);
 
-    set_one_web_setting(settings, enable-webgl, true); // <may(not) have effect
-    set_one_web_setting(settings, enable-private-browsing, true);
-    //set_one_web_setting(settings, enable-spatial-navigation, true);
+     set_one_property(settings, enable-webgl, true); // <may have no effect
+     set_one_property(settings, enable-private-browsing, true);
+    // set_one_property(settings, enable-spatial-navigation, true);
 
-    set_one_web_setting(settings, enable-fullscreen, false);
-    set_one_web_setting(settings, enable-java-applet, false);
-    set_one_web_setting(settings, enable-plugins, false);
+     set_one_property(settings, enable-fullscreen, false);
+     set_one_property(settings, enable-java-applet, false);
+     set_one_property(settings, enable-plugins, false);
+
+    GtkBox * vbox = GTK_BOX(gtk_vbox_new(false, 0));
+
+    create_top_hbox(vbox);
 
     // note: attempted to move creation of web_view to separate function
     //   -- adding web_view to window later (probably after
     //      webkit_web_view_load_uri()) caused window to be resized...
     gtk_container_add(GTK_CONTAINER(scrollw), GTK_WIDGET(web_view));
-    gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(scrollw));
 
-    signal_connect(window, delete-event, delete_event_cb, null);
+    gtk_box_pack_start(vbox, scrollw, true, true, 0);
+
+    //gtk_container_add();
+    gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(vbox));
+
+    signal_connect(window, delete-event, destroy_toplevels_main_quit, null);
     signal_connect(window, destroy, destroy_toplevels_main_quit, null);
     // välkkymisenestoa... tai siis oli joskus
-    //signal_connect(window, motion-notify-event, ignore_motion_notify, null);
-    //signal_connect(web_view, motion-notify-event, ignore_motion_notify, null);
+    //signal_connect(window, motion-notify-event, gtk_true, null);
+    //signal_connect(web_view, motion-notify-event, gtk_true, null);
 #if 0
     signal_connect(web_view, close-web-view, close_cb, window);
 #endif
@@ -873,6 +849,7 @@ int main(int argc, char* argv[])
     BE;
 
     gtk_main();
+
 #if 0 // tis didnt wrok (either)
     while (true) {
         GList * list = gtk_window_list_toplevels();
