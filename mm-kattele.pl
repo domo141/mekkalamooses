@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Mon 29 Feb 2016 19:50:38 EET too
-# Last modified: Sat 19 Mar 2016 17:25:59 +0200 too
+# Last modified: Sun 20 Mar 2016 17:17:17 +0200 too
 
 use 5.8.1;
 use strict;
@@ -103,9 +103,10 @@ if ($ARGV[0] eq 'vlclla')
 if ($ARGV[0] eq 'mplayerillä')
 {
     my @opts;
-    # unfortunately mplayer & mplayer2 do not share same command line option
-    # here (mplayer2 does not need it) -- and then there are -subcp vs --subcp
-    push @opts, '-utf8' unless -d '/usr/share/mplayer2';  # XXX dummy heuristic
+    # Some systems use mplayer2 (as mplayer) (which has slightly different
+    # command line options/conventions (e.g. -subcp vs --subcp)). As its
+    # development status is "unknown" just try minimal support for it.
+    push @opts, '-utf8' unless -d '/usr/share/doc/mplayer2';
     push @opts, ('-sub', getsrt) if defined $ARGV[2];
 
     exec 'mplayer', qw/-fs -quiet -osd-duration 2000 -af scaletempo -ontop
