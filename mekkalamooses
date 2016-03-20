@@ -8,7 +8,7 @@
 #
 # Created: Sat 06 Jun 2015 12:36:20 EEST too // telekkarista
 # Created: Wed 13 Jan 2016 20:18:53 EET too // mekkalamooses
-# Last modified: Mon 14 Mar 2016 20:59:59 +0200 too
+# Last modified: Sun 20 Mar 2016 19:05:51 +0200 too
 #
 # Licensed under GPLv3
 
@@ -89,7 +89,7 @@ aseta_tiedostohakemisto
 
 # poista poistojonossa olevat. toiminee linux- ja *BSD-ympäristöissä...
 ( cd $MM_TIEDOSTOHAKEMISTO
-  test -d kesken || exit 0
+  test -d kesken || mkdir kesken
   cd kesken
   day=
   dc () {
