@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Wed 13 Jan 2016 20:18:53 EET too
-# Last modified: Mon 14 Mar 2016 19:44:23 +0200 too
+# Last modified: Mon 21 Mar 2016 19:22:42 +0200 too
 
 # Licensed under GPLv3
 
@@ -106,6 +106,7 @@ close O;
 md $td;
 chdir $td or die "Cannot chdir to '$td': $!\n";
 
+my $aa = time;
 unless (fork) {
     system qw/pkill -USR1 mm-tausta/;
     print "\nHuomaa: jotkut lataukset ovat aivan hiljaisia\n";
@@ -118,6 +119,7 @@ unless (fork) {
 }
 sleep 1 while wait == -1;
 exit if $?;
+my $la = time;
 
 # https://en.wikipedia.org/wiki/Zeller%27s_congruence
 sub zeller_paiva($$$)
@@ -132,9 +134,11 @@ sub zeller_paiva($$$)
     return qw/la su ma ti ke to pe/[$wd];
 }
 
+my $size;
 for (<*.*>) {
     next if /frag/i;
     next unless -f $_;
+    $size += -s $_;
     my $s = $_;
     # toivottavasti aikaformaatti säilyy...
     if (s/-(\d\d\d\d)-(\d\d)-(\d\d)T(\d\d):(\d\d):[^.]+(.*)//) {
@@ -151,5 +155,13 @@ for (<*.*>) {
 chdir '..';
 rmdir $d;
 chdir $cwd;
+
+if ($la - $aa > 5 && $size > 1e7) {
+    $size /= 1024;
+    my $ka = int($la - $aa);
+    my $kts = int($size / $ka);
+    $size = int($size / 1024);
+    print "$size megatavua siirrettiin $ka sekunnissa (~$kts kt/sek.)\n";
+}
 exit if fork;
 exec './mm-viesti', $url, 'lataus suoritettu';

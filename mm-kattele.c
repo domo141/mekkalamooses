@@ -15,7 +15,7 @@
  *          All rights reserved
  *
  * Created: Mon 29 Feb 2016 19:18:15 EET too
- * Last modified: Thu 17 Mar 2016 17:21:36 +0200 too
+ * Last modified: Mon 21 Mar 2016 19:59:22 +0200 too
  */
 
 
@@ -184,6 +184,19 @@ void sigchld_handler(int sig)
 	G.cpid = 0;
 }
 
+static gboolean present_window(void /* *p */)
+{
+    gtk_window_present(GTK_WINDOW(G.window));
+    return false;
+}
+
+static
+void sigusr1_handler(int sig)
+{
+    (void)sig;
+    g_idle_add((GSourceFunc)present_window, null);
+}
+
 static void env_exists(const char * name)
 {
     if (getenv(name) == null)
@@ -304,13 +317,13 @@ static void fork_me(void)
     pclose(fh);
     if (isspace(buf[1]) || buf[1] == '\0') {
 	if (buf[0] == '1') {
-	    if (xfork())
+	    if (! isatty(1) && xfork())
 		exit(0); // parent
 	    else
 		return;  // child
 	}
 	if (buf[0] == '2')
-	    exit(0);
+	    exec_command("/usr/bin/pkill", "-USR1", "mm-kattele", null);
     }
     /**/ if (isspace(buf[1])) buf[1] = '\0';
     else if (isspace(buf[2])) buf[2] = '\0';
@@ -629,6 +642,7 @@ int main(int argc, char ** argv)
     env_exists("MM_TIEDOSTOHAKEMISTO");
     fork_me();
     _sigact(SIGCHLD, sigchld_handler);
+    _sigact(SIGUSR1, sigusr1_handler);
     int lw;
     BB;
     int lt[4][2];
@@ -651,7 +665,7 @@ int main(int argc, char ** argv)
     //gtk_window_(set_default_size, G.window, 980, 600);
     gtk_window_(set_resizable, G.window, false);
     gtk_window_(set_position, G.window, GTK_WIN_POS_CENTER);
-
+    gtk_window_(set_icon_from_file, G.window, "mm-harmaa.png", null);
     BB;
     GtkWidget * hbox = null;
     G.rows = G.cnt;

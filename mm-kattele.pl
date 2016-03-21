@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Mon 29 Feb 2016 19:50:38 EET too
-# Last modified: Sun 20 Mar 2016 17:17:17 +0200 too
+# Last modified: Mon 21 Mar 2016 19:26:21 +0200 too
 
 use 5.8.1;
 use strict;
@@ -45,7 +45,7 @@ unless (@ARGV)
 	    }
 	    next;
 	}
-	if (/(.*)[.](?:flv|mp4)/) {
+	if (/(.*)[.](?:flv|mp4)/ or -s $_ > 1e7) {
 	    $pfl = length() - 3;
 	    $pfx = substr $_, 0, $pfl;
 	    print "/\n//", $_;

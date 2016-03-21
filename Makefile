@@ -1,5 +1,5 @@
 
-# Last modified: Sun 13 Mar 2016 18:26:34 +0200 too
+# Last modified: Mon 21 Mar 2016 19:56:22 +0200 too
 
 SHELL = /bin/sh
 
@@ -64,7 +64,8 @@ install.sh:
 	pls='mm-lataaja.pl mm-kattele.pl tv-yle.pl'
 	for pl in $pls; do perl -c $pl; done
 	mdms "$td" "$dappdir" "$icondir"
-	x cp -f mekkalamooses $pls mm-ikoni.png mekkalamooses-128.png "$td"
+	x cp -f mekkalamooses $pls \
+		mm-ikoni.png mm-harmaa.png mekkalamooses-128.png "$td"
 	x cp -f gtk2-tummakahvi-muokattu.rc "$@" "$td"
 	if test -d yle-dl
 	then
