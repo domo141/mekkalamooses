@@ -18,7 +18,7 @@
  *
  * Created: Mon 01 Jun 2015 22:19:23 EEST too // telekkarista-wkg.c
  * Created: Mon 11 Jan 2016 20:48:31 EET too // mm-selain.c
- * Last modified: Sat 19 Mar 2016 18:26:38 +0200 too
+ * Last modified: Tue 22 Mar 2016 07:03:55 +0200 too
  */
 
 // Licensed under GPLv3
@@ -190,6 +190,7 @@ struct {
     WebKitWebView * web_view;
     GtkWidget * addrlw;
     char ** argv; // for execvp :/ (XXX gtk args gets lost if any)
+    int reload_painettu;
 } G;
 
 __attribute__((sentinel))
@@ -433,6 +434,7 @@ static void beginning(void)
 
 static void reload(void)
 {
+    G.reload_painettu = true;
     webkit_web_view_reload(G.web_view);
 }
 
@@ -573,6 +575,9 @@ static gboolean navigation_policy_decision_requested(
     static uint32_t ph = 0;
     uint32_t ch = djb2_hash(uri);
 
+    int rp = G.reload_painettu;
+    G.reload_painettu = false;
+
     if (ct - pt < 2000000) {
         if (ch == ph) {
             pt = ct;
@@ -584,10 +589,12 @@ static gboolean navigation_policy_decision_requested(
     ph = ch;
 
     if (nomatch == 0) {
-        run_command("./mm-kysely", uri, null);
-        if (! regexec(&G.preg2, uri, 0, null, 0)) {
-            webkit_web_policy_decision_ignore(policy_decision);
-            return true;
+        if (rp || ! regexec(&G.preg2, uri, 0, null, 0)) {
+            run_command("./mm-kysely", uri, null);
+            if (! rp) {
+                webkit_web_policy_decision_ignore(policy_decision);
+                return true;
+            }
         }
     }
     gtk_label_(set_text, G.addrlw, uri);
