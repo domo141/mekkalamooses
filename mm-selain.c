@@ -18,7 +18,7 @@
  *
  * Created: Mon 01 Jun 2015 22:19:23 EEST too // telekkarista-wkg.c
  * Created: Mon 11 Jan 2016 20:48:31 EET too // mm-selain.c
- * Last modified: Tue 22 Mar 2016 07:03:55 +0200 too
+ * Last modified: Mon 28 Mar 2016 15:21:56 +0300 too
  */
 
 // Licensed under GPLv3
@@ -768,8 +768,14 @@ int main(int argc, char* argv[])
 
     if (argc > 1 && is_geometry_string(argv[1]))
         gtk_window_parse_geometry(GTK_WINDOW(window), argv[1]);
-    else
+    //  XXX no 'width-request' setting here...
+    else {
         gtk_window_set_default_size(GTK_WINDOW(window), 1020, 720);
+        // although attempted to keep window width fixed (by some mystic
+        // widget adding order below) some pages made window resized anyhow
+        // this property (hopefully) keeps it constant now
+        set_one_property(window, width-request, 1020);
+    }
 
     GtkWidget * scrollw = gtk_scrolled_window_new(null, null);
 
