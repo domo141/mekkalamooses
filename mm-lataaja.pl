@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Wed 13 Jan 2016 20:18:53 EET too
-# Last modified: Mon 21 Mar 2016 19:22:42 +0200 too
+# Last modified: Sat 26 Nov 2016 21:49:36 +0200 too
 
 # Licensed under GPLv3
 
@@ -103,6 +103,8 @@ open O, '>>', "$hak/kesken/jono" || die $!;
 print O ".  $date  $url\n";
 close O;
 
+my $un = $url; $un =~ s/.*[^\d]//; $un = '-'.$un if $un;
+
 md $td;
 chdir $td or die "Cannot chdir to '$td': $!\n";
 
@@ -146,9 +148,10 @@ for (<*.*>) {
 	my $aika = $1.$2.$3.'-'.$zvpv.'-'.$4.$5;
 	my $lopp = $6;
 	$_ = $_ . '-' . $aika unless s/\s*:\s*/-$aika-/;
-	$_ = $_ . $lopp;
+	$_ = $_ . $un . $lopp;
     }
     tr/: ,/___/; s/__+/_/g;
+    #push @nimet, [ $s, $_ ];
     rename $s, "../../$_";
     print "Siirretty nimelle $_\n";
 }
