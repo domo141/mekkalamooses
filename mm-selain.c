@@ -18,7 +18,7 @@
  *
  * Created: Mon 01 Jun 2015 22:19:23 EEST too // telekkarista-wkg.c
  * Created: Mon 11 Jan 2016 20:48:31 EET too // mm-selain.c
- * Last modified: Mon 28 Mar 2016 15:21:56 +0300 too
+ * Last modified: Thu 22 Dec 2016 22:36:20 +0200 too
  */
 
 // Licensed under GPLv3
@@ -70,6 +70,8 @@
 #define execve(a,b,c) xexecve(a,b,c)
 //#define open xopen // in this case varargs...
 
+#define access(p, m) xaccess(p, m) // p has nonnull attribute which broke somet
+
 #include <gtk/gtk.h>
 #include <webkit/webkit.h>
 
@@ -89,6 +91,9 @@
 
 #undef execve
 extern int execve(const char *cmd, const char *argv[], char * const envp[]);
+
+#undef access
+extern int access(const char *pathname, int mode);
 
 // (variable) block begin/end -- explicit liveness...
 #define BB {
