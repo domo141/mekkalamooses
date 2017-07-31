@@ -17,7 +17,7 @@
  *	    All rights reserved
  *
  * Created: Tue 25 Sep 2012 22:10:56 EEST too
- * Last modified: Thu 17 Mar 2016 17:12:17 +0200 too
+ * Last modified: Sun 30 Jul 2017 23:22:57 +0300 too
  */
 
 // Licensed under GPLv3
@@ -496,9 +496,9 @@ int main(int argc, char * argv[])
 
 #if 0
     cairo_surface_t * pm = gdk_window_create_similar_surface
-	(window->window, CAIRO_CONTENT_COLOR, int 728, 548);
+	(window->window, CAIRO_CONTENT_COLOR, int 764, 548);
 #endif
-    G.pixmap = gdk_pixmap_new(window->window, 728, 548, -1);
+    G.pixmap = gdk_pixmap_new(window->window, 764, 548, -1);
     G.image = gtk_image_new_from_pixmap(G.pixmap, null);
 
     gtk_container_add(GTK_CONTAINER(window), G.image);
@@ -511,7 +511,7 @@ int main(int argc, char * argv[])
     set_text_color(G.cr);
     cairo_select_font_face(G.cr, "monospace",
 			   CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-    // attempt for 80x30, 9 pixels wide glyphs, 18 pixels line height (720x540)
+    // attempt for 84x30, 9 pixels wide glyphs, 18 pixels line height (756x540)
     double trysize = 15.0;
     cairo_set_font_size(G.cr, trysize);
 
@@ -628,7 +628,7 @@ static void draw_btn(int qd)
 	cairo_set_source_rgb(G.cr, 0.5, 0.5, 0.8);
     else
 	cairo_set_source_rgb(G.cr, 0.4, 0.4, 0.7);
-    cairo_rectangle(G.cr, 730 - LBW - 16, TBW - 2, 16, 16);
+    cairo_rectangle(G.cr, 766 - LBW - 16, TBW - 2, 16, 16);
     cairo_fill(G.cr);
     set_text_color(G.cr);
     if (qd)
@@ -644,7 +644,7 @@ void clear_line(void)
 #else
     cairo_set_source_rgb(G.cr, 0.0, 0.0, 0.2);
 #endif
-    cairo_rectangle(G.cr, LBW, TBW + G.y * G.lineheight, 720, G.lineheight);
+    cairo_rectangle(G.cr, LBW, TBW + G.y * G.lineheight, 756, G.lineheight);
     cairo_fill(G.cr);
     set_text_color(G.cr);
     cairo_move_to(G.cr, LBW, G.top + G.y * G.lineheight);
@@ -660,7 +660,7 @@ void maybe_scroll(void)
 	// let's see how scroll works... (overlapping surfaces...)
 	gdk_cairo_set_source_pixmap(G.cr, G.pixmap, 0.0, -G.lineheight);
 
-	cairo_rectangle(G.cr, LBW, TBW, 720, 540 - G.lineheight);
+	cairo_rectangle(G.cr, LBW, TBW, 756, 540 - G.lineheight);
 	cairo_fill(G.cr);
 	set_text_color(G.cr);
 	clear_line();
@@ -811,13 +811,13 @@ gboolean read_process_input(GIOChannel * source,
 	    o = 0;
 	    continue;
 	}
-	if (x < 79) {
+	if (x < 83) {
 	    x++;
 	    o++;
 	    continue;
 	}
-	if (x == 79) {
-	    x = 80;
+	if (x == 83) {
+	    x = 84;
 	    // XXX quick&dirty eol half-utf8 avoidance
 	    if (p[o] & 0x80) {
 		int q = o - 1;
@@ -828,7 +828,7 @@ gboolean read_process_input(GIOChannel * source,
 		p[q] = '\0';
 	    }
 	    o++;
-	    //printf("79: %d: '%.*s'\n", o, o, p);
+	    //printf("83: %d: '%.*s'\n", o, o, p);
 	    draw_text(p, o);
 	    p += o;
 	    G.drawstate = 3;
