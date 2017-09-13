@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Wed 13 Jan 2016 20:18:53 EET too
-# Last modified: Sat 26 Nov 2016 21:49:36 +0200 too
+# Last modified: Sat 05 Aug 2017 10:40:32 +0300 too
 
 # Licensed under GPLv3
 
@@ -112,6 +112,7 @@ my $aa = time;
 unless (fork) {
     system qw/pkill -USR1 mm-tausta/;
     print "\nHuomaa: jotkut lataukset ovat aivan hiljaisia\n";
+    system qw/df -h ./;
     #exec qw/urxvt -hold -e sh -c/, "echo $yle_dl";
     xexec $yle_dl, qw/--latestepisode --backend adobehdsphp
 		      --maxbitrate/, $ARGV[1], @lisaa, $url;

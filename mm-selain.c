@@ -18,7 +18,7 @@
  *
  * Created: Mon 01 Jun 2015 22:19:23 EEST too // telekkarista-wkg.c
  * Created: Mon 11 Jan 2016 20:48:31 EET too // mm-selain.c
- * Last modified: Thu 22 Dec 2016 22:36:20 +0200 too
+ * Last modified: Wed 13 Sep 2017 20:19:42 +0300 too
  */
 
 // Licensed under GPLv3
@@ -664,10 +664,10 @@ static void doreg(void)
 {
     // when these are updated, update $url in mm-lataaja.pl too
     static const char re1[] = "^"
-        "http://areena.yle.fi/[0-9]+-[0-9]+([?#].*)?"
+        "https?://areena.yle.fi/[0-9]+-[0-9]+([?#].*)?"
         "$";
     static const char re2[] = "^"
-        "http://areena.yle.fi/[0-9]+-[0-9]+[?#]autoplay=";
+        "https?://areena.yle.fi/[0-9]+-[0-9]+[?#]autoplay=";
     _doregcomp(&G.preg1, re1);
     _doregcomp(&G.preg2, re2);
 }
