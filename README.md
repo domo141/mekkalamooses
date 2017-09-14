@@ -25,16 +25,19 @@ tarkasti minne.
 Suoratoistovaihtoehdot käyttävät vlc:ta, joten se on asennettava. Yleensä
 se on helposti saatavilla kaikille mahdollisille alustoille.
 
-Käytössä saattaa `yle-dl` osoittautua hyödylliseksi. Nykyisen tiedon mukaan
-vuodenvaihteessa 15-16 julkaistu 2.10.0 (ja tod.näk. uudemmat) toimivat
-paremmin kuin aikaisemmat versiot. Jos koneessa on vanhempi versio, voi
-asiaa auttaa (git) kloonaamalla tai symlinkkaamalla
-(tai jopa git worktreella) hakemiston `yle-dl/` mekkalamooseksen
-lähdekoodihakemistoon. Tällöin mekkalamooses käyttää `yle-dl/yle-dl` ja
-`yle-dl/AdobeHDS.php` -tiedostoja järjestelmään asennettujen sijaan.
-`make install` tekee sitten oman `yle-dl` -symlinkkauksen asennushakemistoon
-(joka siis useimmin $HOME/.local/share/mekkalamooses/).
+Käytössä saattaa `yle-dl` osoittautua hyödylliseksi. Helpoiten usein riittävän
+tuoreen version saa käyttämällä (python2) `virtualenv` -komentoa. Testausta
+varten `virtualenv venv` -komennon voi suorittaa nykyisessä työhakemistossa
+(eli tässä jossa on myös ./mekkalamooses). Asennusta varten `venv` korvataan
+(siis useimmin) polulla `$HOME/.local/share/mekkalamooses/venv`. Tämän
+jälkeen suoritetaan
 
+    source /polku/venv/bin/activate
+    pip install yle-dl
+
+Huomaa, että myös symbolista linkkiä `venv` -kohdehakemistoon voi käyttää.
+
+`yle-dl` käyttää *AdobeHDS* php-ohjelmaa (tulee uuden yle-dl:n mukana).
 `AdobeHDS.php` vaatii php:n että toimii ollenkaan -- ja sitten se valittaa
 jos jotain sen tarvitsemia php-paketteja(*) puuttuu. Ainakin Fedora 20:ssa
 puuttuvat paketit oli helppo asentaa `yum`:lla joten eiköhän se onnistu

@@ -1,5 +1,5 @@
 
-# Last modified: Mon 21 Mar 2016 19:56:22 +0200 too
+# Last modified: Thu 14 Sep 2017 07:38:49 +0300 too
 
 SHELL = /bin/sh
 
@@ -51,15 +51,6 @@ install: $(BIN) force
 
 install.sh:
 	test -n "$1" || exit 1 # internal shell script; not to be made directly
-	if test -d yle-dl
-	then
-		if test -d "$td"/yle-dl && test ! -h "$td"/yle-dl
-		then
-			oo $PWD/yle-dl on olemassa ja
-			oo "$td"/yle-dl on olemassa
-			o  mutta tämä jälkimmäinen ei ole symbolinen linkki
-		fi
-	fi
 	x sh -n mekkalamooses
 	pls='mm-lataaja.pl mm-kattele.pl tv-yle.pl'
 	for pl in $pls; do perl -c $pl; done
@@ -67,11 +58,6 @@ install.sh:
 	x cp -f mekkalamooses $pls \
 		mm-ikoni.png mm-harmaa.png mekkalamooses-128.png "$td"
 	x cp -f gtk2-tummakahvi-muokattu.rc "$@" "$td"
-	if test -d yle-dl
-	then
-		x rm -f "$td"/yle-dl
-		x ln -s "`exec realpath -P yle-dl`" "$td"/yle-dl
-	fi
 	df=mekkalamooses.desktop; sed "s|=./|=$td/|" "$df" > "$dappdir"/"$df"
 #	# I'd ln(1), but might be on different fs - and symlink needs more work
 	x cp -f "$td"/mekkalamooses-128.png "$icondir"

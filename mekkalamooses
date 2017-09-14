@@ -8,7 +8,7 @@
 #
 # Created: Sat 06 Jun 2015 12:36:20 EEST too // telekkarista
 # Created: Wed 13 Jan 2016 20:18:53 EET too // mekkalamooses
-# Last modified: Sun 20 Mar 2016 19:05:51 +0200 too
+# Last modified: Thu 14 Sep 2017 07:41:17 +0300 too
 #
 # Licensed under GPLv3
 
@@ -23,6 +23,13 @@ then	if test "$0" = './mekkalamooses'
 		MM_KOTI=${XDG_DATA_HOME:-$HOME/.local/share}/mekkalamooses
 	fi
 	export MM_KOTI
+fi
+
+if test -f "$MM_KOTI/venv/bin/activate"
+then
+	set +u
+	. "$MM_KOTI/venv/bin/activate"
+	set -u
 fi
 
 die () { echo "$@" >&2; exit 1; }
