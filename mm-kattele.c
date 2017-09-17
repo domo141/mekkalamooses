@@ -15,7 +15,7 @@
  *          All rights reserved
  *
  * Created: Mon 29 Feb 2016 19:18:15 EET too
- * Last modified: Mon 21 Mar 2016 19:59:22 +0200 too
+ * Last modified: Sun 17 Sep 2017 17:09:29 +0300 too
  */
 
 
@@ -563,7 +563,7 @@ static void clicked(void * d /*, ... */)
     gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(w), txt)
 	G.kielev = 12345;
 	while (*p != '\n') {
-	    const const char * txt = (*p == '\0')? "joo": (const char *)p;
+	    const char * txt = (*p == '\0')? "joo": (const char *)p;
 	    widget = rbnwlfw(widget, txt);
 	    signal_connect(widget, toggled, rb_toggled, p);
 	    gtk_box_(pack_start, hbox, widget, false, false, 4);

@@ -1,5 +1,5 @@
 
-# Last modified: Thu 14 Sep 2017 07:38:49 +0300 too
+# Last modified: Sun 17 Sep 2017 18:31:24 +0300 too
 
 SHELL = /bin/sh
 
@@ -14,11 +14,16 @@ else
 	GITDIR = .git
 endif
 
-all: $(BIN)
+ALL = $(BIN) ldpreload_fake_isatty.so
+
+all: $(ALL)
 
 mm-tausta: $(GITDIR)
 
 mm-%:	mm-%.c
+	sh $<
+
+ldpreload_fake_isatty.so: ldpreload_fake_isatty.c
 	sh $<
 
 LHW=250
@@ -45,9 +50,9 @@ lib.sh:
 #	#eos
 	exit 1 # not reached
 
-install: $(BIN) force
+install: $(ALL) force
 	sed -n  -e '/[.]sh:$$/ s/^/#/' -e '/^#lib.sh/,/#.#eos/p' \
-		-e '/^#$@.sh:/,/^#.#eos/p' Makefile | sh -s $(BIN)
+		-e '/^#$@.sh:/,/^#.#eos/p' Makefile | sh -s $(ALL)
 
 install.sh:
 	test -n "$1" || exit 1 # internal shell script; not to be made directly
@@ -76,7 +81,7 @@ install.sh:
 
 uninstall: force
 	sed -n  -e '/[.]sh:$$/ s/^/#/' -e '/^#lib.sh/,/#.#eos/p' \
-		-e '/^#$@.sh:/,/^#.#eos/p' Makefile | sh -s $(BIN)
+		-e '/^#$@.sh:/,/^#.#eos/p' Makefile | sh -s $(ALL)
 
 uninstall.sh:
 	test -n "$1" || exit 1 # internal shell script; not to be made directly
@@ -98,7 +103,7 @@ clean: force
 	rm -f testaa-regex logo.png *~
 
 distclean: clean
-	rm -f $(BIN)
+	rm -f $(ALL)
 
 # empty the (unneeded) default suffix list with an empty .SUFFIXES target
 .SUFFIXES:
