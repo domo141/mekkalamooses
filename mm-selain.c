@@ -19,7 +19,7 @@
  * Created: Mon 01 Jun 2015 22:19:23 EEST too // telekkarista-wkg.c
  * Created: Mon 11 Jan 2016 20:48:31 EET too // mm-selain.c
  * Created: Sat 10 Mar 2018 22:56:01 EET too // webkitgtk2
- * Last modified: Sat 17 Mar 2018 17:22:10 +0200 too
+ * Last modified: Sat 17 Mar 2018 20:02:19 +0200 too
  */
 
 // Licensed under GPLv3
@@ -608,8 +608,12 @@ int main(int argc, char* argv[])
     // if (argc > 1 && is_geometry_string(argv[1])) ...
     gtk_window_(set_default_size, window, 1020, 720);
 
+#if WEBKIT_CHECK_VERSION(2,16,0)
     WebKitWebContext * context = webkit_web_context_new_ephemeral();
     GtkWidget * web_view = webkit_web_view_new_with_context(context);
+#else
+    GtkWidget * web_view = webkit_web_view_new();
+#endif
     BB;
     // all black -- no flashing! -- alpha setting seems to not matter
     GdkRGBA black = { 0, 0, 0, 1.0 };
@@ -618,6 +622,9 @@ int main(int argc, char* argv[])
     webkit_web_view_(set_background_color, web_view, &black);
     BE BB;
     WebKitSettings * settings = webkit_web_view_(get_settings, web_view);
+#if ! WEBKIT_CHECK_VERSION(2,16,0)
+    webkit_settings_set_enable_private_browsing(settings, true);
+#endif
     webkit_settings_set_enable_fullscreen(settings, false);
     webkit_settings_set_enable_java(settings, false);
     webkit_settings_set_enable_plugins(settings, false);
