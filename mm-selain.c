@@ -19,7 +19,7 @@
  * Created: Mon 01 Jun 2015 22:19:23 EEST too // telekkarista-wkg.c
  * Created: Mon 11 Jan 2016 20:48:31 EET too // mm-selain.c
  * Created: Sat 10 Mar 2018 22:56:01 EET too // webkitgtk2
- * Last modified: Sat 17 Mar 2018 20:02:19 +0200 too
+ * Last modified: Wed 24 Apr 2019 23:32:07 +0300 too
  */
 
 // Licensed under GPLv3
@@ -111,13 +111,8 @@ extern int execve(const char *cmd, const char *argv[], char * const envp[]);
 #define __attribute__(x)
 #endif
 
-// let's try something different -- use '#if 0' and then go through all
-// warnings & outcomment the unused lines just to see that are really unused
-#if 1
-#define uu(u) (void)(u)
-#else
-#define uu(u) (void)u; u
-#endif
+/* uu(a) -- unused, but we'd notice if use was attempted */
+#define uu(a) a_unused __attribute__((unused))
 
 #if 0
 #define DBG 1
@@ -402,12 +397,11 @@ static void restart(void /* GtkButton *button, gpointer user_data */)
 }
 
 #if 0 // all the resources that are being loaded...
-static void resource_load_started(WebKitWebView     *web_view,
+static void resource_load_started(WebKitWebView *    uu(web_view),
 				  WebKitWebResource *resource
 				  /*WebKitURIRequest  *request*/
 				  /*gpointer           user_data*/)
 {
-    uu(web_view);
     const char * uri = webkit_web_resource_get_uri(resource);
     dprintf("%s", uri);
 }
@@ -464,11 +458,10 @@ static gboolean decide_navigation_policy(WebKitPolicyDecision *decision)
     return false;
 }
 
-static gboolean decide_policy (WebKitWebView *web_view,
+static gboolean decide_policy (WebKitWebView * uu(web_view),
 			       WebKitPolicyDecision *decision,
 			       WebKitPolicyDecisionType type)
 {
-    uu(web_view);
     switch (type) {
     case WEBKIT_POLICY_DECISION_TYPE_NAVIGATION_ACTION:
 	return decide_navigation_policy(decision);
